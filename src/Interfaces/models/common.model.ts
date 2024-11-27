@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ReactNode } from "react";
+import { Flight } from "../UI/flightList";
 
 export interface FieldOptionProps {
   label: string;
@@ -77,6 +78,24 @@ export interface TimerProps {
 
 export interface InitialStateProps {
   loading: boolean;
-  data: any | null;
+  data:any | null;
+  onwardFlights: Flight[] | null;
+  returnFlights: Flight[] | null;
+  comboFlights: Flight[]| null;
   error: any | null;
+  dynamicFilters: any | null;
+  twoWayDynamicFilters: any | null;
+  formattedData: any | null;
+}
+export interface InitialStateRoundTripProps {
+  loading: boolean;
+  data:any | null;
+  onwardFlights: Flight[] | null;
+  returnFlights: Flight[] | null;
+  comboFlights: Flight[] | null;
+  error: any | null;
+  dynamicFilters: any | null;
+  twoWayDynamicFilters: any | null;
+  formattedOnwardData: any | null;
+  formattedReturnData: any | null;
 }

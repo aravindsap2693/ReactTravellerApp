@@ -1,30 +1,41 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState, forwardRef, useImperativeHandle } from "react";
-import { Container, Content, Form, Panel, Stack, VStack, Modal } from "rsuite";
-import Background from "../../assets/Images/jumbo.svg";
-import Logo from "../../assets/Images/Tripvista_Logos.svg";
+import {
+  Container,
+  Content,
+  Form,
+  Panel,
+  Stack,
+  VStack,
+  Modal,
+  Loader,
+} from "rsuite";
+import Background from "../../assets/images/LoinImage.svg";
+import Logo from "../../assets/images/Tripvista_Logos.svg";
 import styles from "../../assets/styles/login.module.css";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import TForm from "../../Component/Common/TForm";
 import TButton from "../../Component/Common/TButton";
 import { REGISTER } from "../../Utils/Constant/constant";
-import { LoginCredentials, LoginRef } from "../../Interfaces/models/login.model";
-import { login } from "../../Api/login.api";
+import {LoginCredentials, LoginRef} from "../../Interfaces/models/login.model";
+import { forgetPassword, login } from "../../Api/login.api";
+import { toast } from "react-toastify";
 
 const initialState: LoginCredentials = {
   username: "",
   password: "",
 };
 
-const Login = forwardRef<LoginRef>((props, ref) => {
+const Login = forwardRef<LoginRef>((_props, ref) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [formValues, setFormValues] = useState<LoginCredentials>(initialState);
-  const [validationError, setValidationErrors] =
-    useState<LoginCredentials>(initialState);
-  const [open, setOpen] = useState(false);
+  const [validationError, setValidationErrors] = useState<LoginCredentials>(initialState);
+  const [open, setOpen] = useState<boolean>(false);
   const [forgotpwd, setForgotpwd] = useState(false);
+  // const [apiResponse, setApiResponse] = useState(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     // Logic for redirecting if authenticated can be added here
@@ -49,7 +60,7 @@ const Login = forwardRef<LoginRef>((props, ref) => {
     } else if (name === "password" && value.length < 8) {
       return "Password must be at least 8 characters long.";
     }
-    return ""; // No errors
+    return ""; 
   };
 
   const handleChange = (name: string, value: number | boolean | string) => {
@@ -61,7 +72,7 @@ const Login = forwardRef<LoginRef>((props, ref) => {
     }));
   };
 
-  const handleSignIn = async() => {
+  const handleSignIn = async () => {
     const usernameError = validateField("username", formValues.username);
     const passwordError = validateField("password", formValues.password);
     if (!usernameError && !passwordError) {
@@ -69,16 +80,16 @@ const Login = forwardRef<LoginRef>((props, ref) => {
         username: formValues.username,
         password: formValues.password,
       };
-      // dispatch(login(payload) as any);
       // Dispatch the login action and wait for the result
-    const result = await dispatch(login(payload) as any);
-    console.log("result",result)
+      const result = await dispatch(login(payload) as any);
 
-    if (result?.status === "Success") {
-      navigate('/home'); // Navigate to home if login is successful
-    } else {
-      navigate('/'); // Navigate to login page if login fails
-    }
+      if (result?.status === "Success") {
+        toast.success("Login Successful! Welcome back.");
+        navigate("/home"); 
+      } else {
+        toast.error("Login Failed! Please check your credentials.");
+        navigate("/"); 
+      }
       handleModalClose();
     } else {
       setValidationErrors({
@@ -93,9 +104,27 @@ const Login = forwardRef<LoginRef>((props, ref) => {
     navigate(REGISTER);
   };
 
-  const handleForgotPassword = () => {
+  const handleForgotPassword = async () => {
     setForgotpwd(true);
     setValidationErrors(initialState);
+  };
+
+  const submitForgotPassword = async () => {
+    setLoading(true);
+    try {
+      const response = await forgetPassword(formValues.username);
+      console.log("response", response);
+      toast.success(response.message);
+      setForgotpwd(false);
+    } catch (error:any) {
+      if(error.response.data.error === 'true'){
+        setForgotpwd(true);
+      }
+      toast.error(error.response.data.message)
+    } finally {
+      setLoading(false);
+      
+    }
   };
 
   return (
@@ -114,7 +143,12 @@ const Login = forwardRef<LoginRef>((props, ref) => {
           style={{ marginTop: "80px" }}
         >
           <Modal.Body>
-            <div style={{ display: "flex" }}>
+            <div
+              style={{
+                display: "flex",
+                padding: "0.4em",
+              }}
+            >
               <div
                 style={{
                   flex: 2,
@@ -123,6 +157,8 @@ const Login = forwardRef<LoginRef>((props, ref) => {
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                   color: "white",
+                  borderTopLeftRadius: "1em",
+                  borderBottomLeftRadius: "1em",
                 }}
               >
                 {!forgotpwd && (
@@ -204,7 +240,7 @@ const Login = forwardRef<LoginRef>((props, ref) => {
                             >
                               <a
                                 href="#"
-                                style={{ textDecoration: "none" }}
+                                style={{ textDecorationLine: "underline" }}
                                 onClick={handleForgotPassword}
                               >
                                 Forgot password?
@@ -212,7 +248,11 @@ const Login = forwardRef<LoginRef>((props, ref) => {
                             </Stack>
                             <br />
                             <VStack alignItems="center" justifyContent="center">
-                              <div style={{ width: "100%" }}>
+                              <div
+                                style={{
+                                  width: "100%",
+                                }}
+                              >
                                 <TButton
                                   label="Login"
                                   type="primary"
@@ -230,6 +270,7 @@ const Login = forwardRef<LoginRef>((props, ref) => {
                                 onClick={handleSignUp}
                                 type="link"
                                 label="Sign up"
+                                style={{ color: "#FA503F" }}
                               />
                             </div>
                           </>
@@ -239,8 +280,11 @@ const Login = forwardRef<LoginRef>((props, ref) => {
                             type="primary"
                             padding="10px 0"
                             block={true}
-                            onClick={handleSignIn}
-                          />
+                            onClick={submitForgotPassword}
+                            disabled={loading}
+                          >
+                            {loading ? <Loader size="xs" /> : "Submit"}
+                          </TButton>
                         )}
                       </Form>
                     </Panel>

@@ -23,7 +23,7 @@ const TButton: React.FC<TButtonProps> = ({
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     if (link) {
-        navigate(link); 
+      navigate(link);
     }
   };
 

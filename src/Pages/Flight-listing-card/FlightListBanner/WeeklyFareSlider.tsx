@@ -99,7 +99,7 @@ const WeeklyFareDetails : React.FC<WeeklyFareDetailsProps> = ({flightType}) => {
           }}
         >
           {itemsToDisplay.length > 0 ? (
-            itemsToDisplay.map((card, index) => (
+            itemsToDisplay.map((card) => (
               <Nav.Item
                 key={card.day}
                 eventKey={card.day}

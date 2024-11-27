@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import React from "react";
-import { Panel, Radio, RadioGroup} from "rsuite";
+import { Panel, Radio, RadioGroup } from "rsuite";
 
 import FlightIcon from "../../assets/images/Flight.svg";
 import FlightIconG from "../../assets/images/FlightIconGrey.svg";
@@ -18,43 +18,42 @@ import HolidayIconB from "../../assets/images/HolidayIconBlue.svg";
 import FlightCard from "./Flights/FlightCard";
 import Card from "./Card";
 
-
 const _nav = [
   {
     name: "Flight",
     values: ["Flight"],
-    icon: FlightIcon,
-    icons: FlightIconG,
+    activeIcon: FlightIcon,
+    inactiveIcon: FlightIconG,
   },
   {
     name: "Hotel",
     values: ["Hotel"],
-    icon: HotelIconB,
-    icons: HotelIcon,
+    inactiveIcon: HotelIconB,
+    activeIcon: HotelIcon,
   },
   {
     name: "Train",
     values: ["Train"],
-    icon: TrainIconB,
-    icons: TrainIcon,
+    inactiveIcon: TrainIconB,
+    activeIcon: TrainIcon,
   },
   {
     name: "Cabs",
     values: ["Cabs"],
-    icon: CabsIcon,
-    icons: CabsIconB,
+    inactiveIcon: CabsIcon,
+    activeIcon: CabsIconB,
   },
   {
     name: "Bus",
     values: ["Bus"],
-    icon: BusIconB,
-    icons: BusIcon,
+    inactiveIcon: BusIconB,
+    activeIcon: BusIcon,
   },
   {
     name: "Holiday",
     values: ["Holiday"],
-    icon: HolidayIconB,
-    icons: HolidayIcon,
+    inactiveIcon: HolidayIconB,
+    activeIcon: HolidayIcon,
   },
 ];
 
@@ -64,7 +63,10 @@ const HomeCard = () => {
   // const [from, setFrom] = React.useState(null);
   // const [to, setTo] = React.useState(null);
 
-  const handleBackdropChange = (value: string, _event: React.SyntheticEvent) => {
+  const handleBackdropChange = (
+    value: string,
+    _event: React.SyntheticEvent
+  ) => {
     setBackdrop(value);
   };
 
@@ -90,69 +92,88 @@ const HomeCard = () => {
   return (
     <div style={{ position: "relative", width: "100%" }}>
       <div
-            style={{
-              position: "relative",
-              // backgroundColor: "white",
-              boxSizing: "border-box",
-              display: "flex",
-              justifyContent:"center",
-            }}
-          >
-            <RadioGroup
-              name="radioList"
-              appearance="picker"
-              inline
-              value={backdrop}
-              onChange={(value, event) =>
-                handleBackdropChange(value as string, event)
-              }
+        style={{
+          position: "relative",
+          // backgroundColor: "white",
+          boxSizing: "border-box",
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
+        <RadioGroup
+          name="radioList"
+          appearance="picker"
+          inline
+          value={backdrop}
+          onChange={(value, event) =>
+            handleBackdropChange(value as string, event)
+          }
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            marginTop: "0px",
+            backgroundColor: "#8B226B",
+            border: "transparent",
+            marginLeft: "0px",
+            marginBottom: "50px",
+          }}
+        >
+          {_nav.map((item) => (
+            // <div
+            //   style={{
+            //     padding: "0em",
+            //     borderLeft: [1, 2, 3, 4, 5].includes(index)
+            //       ? "1px solid black"
+            //       : "none",
+            //   }}
+            // >
+            <Radio
+              key={item.name}
+              value={item.values[0]}
+              // style={{ padding: "10px", height: "auto", margin: "5px" }}
               style={{
-                display: "flex",
-              flexWrap: "wrap",
-              marginTop: "0px",
-              backgroundColor: "#8B226B",
-              border: "transparent",
-              marginLeft: "0px",
-              marginBottom: "50px"
+                padding: "10px",
+                height: "auto",
+                margin: "5px",
+                backgroundColor:
+                  backdrop === item.values[0] ? "#B26696" : "transparent", // Active background color
+                borderRadius: "8px", // Optional: Add rounded corners for better styling
+                transition: "background-color 0.3s ease",
               }}
             >
-              {_nav.map((item) => (
-                <Radio
-                  key={item.name}
-                  value={item.values[0]}
-                  // style={{ padding: "10px", height: "auto", margin: "5px" }}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  textAlign: "center",
+                  width: "45px",
+                }}
+              >
+                <img
+                  src={
+                    backdrop === item.values[0]
+                      ? item.activeIcon
+                      : item.inactiveIcon
+                  }
+                  alt={`${item.name} Icon`}
+                  width={30}
+                  height={20}
                   style={{
-                    padding: "10px", height: "auto", margin: "5px", backgroundColor: backdrop === item.values[0] ? "#B26696" : "transparent", // Active background color
-                    borderRadius: "8px", // Optional: Add rounded corners for better styling
-                    transition: "background-color 0.3s ease"
+                    // filter: backdrop === item.values[0] ? 'invert(0.4) sepia(1) saturate(4) hue-rotate(0deg)' : 'invert(53%) sepia(100%) saturate(600%) hue-rotate(180deg) brightness(85%) contrast(100%)',
+                    transition: "filter 0.3s ease",
                   }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      textAlign: "center",
-                      width: "45px",
-                    }}
-                  >
-                    <img
-                      src={backdrop === item.values[0] ? item.icon : item.icons}
-                      alt={`${item.name} Icon`}
-                      width={30}
-                      height={20}
-                      style={{
-                        // filter: backdrop === item.values[0] ? 'invert(0.4) sepia(1) saturate(4) hue-rotate(0deg)' : 'invert(53%) sepia(100%) saturate(600%) hue-rotate(180deg) brightness(85%) contrast(100%)',
-                        transition: "filter 0.3s ease",
-                      }}
-                    />
-                    <span style={{ marginTop: "5px", color:"#FFF" }}>{item.name}</span>
-                  </div>
-                </Radio>
-              ))}
-            </RadioGroup>
-          </div>
+                />
+                <span style={{ marginTop: "5px", color: "#FFF" }}>
+                  {item.name}
+                </span>
+              </div>
+            </Radio>
+            // </div>
+          ))}
+        </RadioGroup>
+      </div>
 
       <Panel
         bordered
@@ -161,7 +182,7 @@ const HomeCard = () => {
           position: "relative",
           overflow: "visible",
           color: "lightgrey",
-          padding: "0",
+          padding: "1",
           height: backdrop === "Flight" ? "auto" : "310px",
         }}
       >

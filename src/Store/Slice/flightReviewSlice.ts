@@ -6,6 +6,10 @@ interface Flight {
   icon: string;
   departure: string;
   departureLocation: string;
+  departureCode: string;
+  arrivalCode: string;
+  departureDate: string;
+  arrivalDate: string;
   duration: string;
   durationDetails: string;
   arrival: string;
@@ -17,6 +21,9 @@ interface Flight {
 }
 interface PricingOption {
   id: string;
+  fareIdentifier: string;
+  sri: string; // Add sri to the mapped segment
+  msri: string;
   fare: number;
   code: string;
   seats: number;
@@ -36,6 +43,12 @@ const initialReviewState: InitialStateProps = {
   loading: false,
   data: null,
   error: null,
+  onwardFlights: null,
+  returnFlights: null,
+  comboFlights: null,
+  dynamicFilters: undefined,
+  twoWayDynamicFilters: undefined,
+  formattedData: undefined
 };
 const flightReviewSlice = createSlice({
   name: "flightReview",
@@ -101,6 +114,9 @@ export const mapFlightData = (tripInfos: any[]): Flight[] => {
       }
       const pricingOptions = tripInfo.totalPriceList.map((price: any) => ({
         id: price.id,
+        fareIdentifier: price.fareIdentifier,
+        sri: price.sri,// Add sri to the mapped segment
+        msri: price.msri || [],
         fare: price.fd.ADULT.fC.TF,
         code: price.fd.ADULT.fC.code,
         seats: price.fd.ADULT.sR,
@@ -124,6 +140,11 @@ export const mapFlightData = (tripInfos: any[]): Flight[] => {
           minute: '2-digit',
         }),
         departureLocation: `${segment.da?.name} (${segment.da?.code})`,
+        departureCode: segment.da?.code,
+        arrivalCode: segment.aa?.code,
+        arrivalDate: `${new Date(segment.at).toLocaleDateString()}`,
+        departureDate: `${new Date(segment.dt).toLocaleDateString()}`,
+
         duration: `${Math.floor(segment.duration / 60)}h ${segment.duration % 60}m`,
         durationDetails: segment.stops === 0 ? 'Non Stop' : `${segment.stops} Stop`,
         arrival: new Date(segment.at).toLocaleTimeString([], {

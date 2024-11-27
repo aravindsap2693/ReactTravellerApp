@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, {useEffect, useState} from "react";
-//import Background from "../assets/images/Tripvista_HomeBackgroundImage.svg";
+import React, { useEffect, useState } from "react";
+
 import Background from "../../../src/assets/images/Tripvista_HomeBackgroundImage.svg";
 import Twowayicon from "../../../src/assets/images/Tripvista_TwoWay.svg";
 import { AutoComplete } from "rsuite";
-import { InputGroup} from "rsuite";
+import { InputGroup } from "rsuite";
 
 import { DatePicker } from "rsuite";
-// import Calendar from "../../assets/images/Calendar.svg";
+
 import Calendar from "../../../src/assets/images/Tripvista_Calendar.svg";
 
 import styles from "../../assets/styles/flight-listing.module.css";
@@ -18,27 +18,26 @@ import FlightFrom from "../../assets/images/FromIcon.svg";
 import IndianFlag from "../../assets/images/IndianFlag.svg";
 import FlightListDropdown from "./FlightListDropdown";
 import { Dropdown } from "rsuite";
-import { ItemDataType } from "rsuite/esm/MultiCascadeTree";
 
 import { useDispatch, useSelector } from "react-redux";
 import { setFlightType } from "../../Store/Slice/flightSlice";
 import MinusIcon from "../../assets/icons/MinusIcon.svg";
 import AddIcon from "../../assets/icons/AddIcon.svg";
-import { setDeparture, setDepartureDates,
-  setDestination, 
-  setFlightOption, setFlightTypeData, setReturnDates } from "../../Store/Slice/flightBannerSlice";
+import {
+  setDeparture,
+  setDepartureDates,
+  setDestination,
+  setFlightOption,
+  setFlightTypeData,
+  setReturnDates,
+} from "../../Store/Slice/flightBannerSlice";
 import { fetchFlightFieldListData } from "../../Api/flightField.api";
 import { ValueType } from "rsuite/esm/Radio";
-import TButton from "../../Component/Common/TButton";
-
-// const data = [
-//   "Select All",
-//   "Trujet [2t]",
-//   "IndiGo [6E]",
-//   "Airliance Air [9I]",
-//   "Air India Express-AX [AX]",
-//   "Coupon Indigo [C6E]",
-// ].map((item) => ({ label: item, value: item }));
+// import TButton from "../../Component/Common/TButton";
+import isBefore from "date-fns/isBefore";
+import { RootState } from "../../Store/store";
+import { formatDateStringToYYYYMMDD } from "../../Component/Common/commonFunction";
+// import { fetchListFlights } from "../../Api/flightList.api";
 
 type Option = {
   label: string;
@@ -53,47 +52,18 @@ const CustomCaret: React.FC = () => (
   <div style={{ width: "10px", height: "16px" }}></div> // Empty div or custom component
 );
 
-const renderMenuItem = (_label: React.ReactNode, item: ItemDataType) => {
-  const option = options.find((opt) => opt.value === String(item.value));
-  return option ? (
-    <div>
-      <Row style={{ display: "flex", alignItems: "center" }}>
-        <Col>
-          <img
-            src={option.flag}
-            alt={`${option.label} Flag`}
-            width={24}
-            height={24}
-            style={{ marginRight: 8 }}
-          />
-        </Col>
-        <Col style={{ textAlign: "left", alignItems: "center" }}>
-          {option.city}, {option.label}
-          <div style={{ fontSize: "0.8em", color: "gray" }}>
-            {option.airport}
-          </div>
-        </Col>
-      </Row>
-
-      {/* <div style={{ marginLeft: 5, fontSize: "0.8em", color: "gray" }}>
-        {option.address}
-      </div> */}
-    </div>
-  ) : null;
-};
-
-const renderValue = (value: any, item: any): any => {
-  const option = options.find((opt) => opt.value === String(value));
-  return option ? (
-    <div style={{ display: "flex", flexDirection: "column" }}>
-      <div>{option.label}</div>
-      <div style={{ fontSize: "0.8em", color: "gray" }}>{option.airport}</div>
-      <div style={{ fontSize: "0.8em", color: "gray" }}>{option.address}</div>
-    </div>
-  ) : (
-    value
-  );
-};
+// const renderValue = (value: any, item: any): any => {
+//   const option = options.find((opt) => opt.value === String(value));
+//   return option ? (
+//     <div style={{ display: "flex", flexDirection: "column" }}>
+//       <div>{option.label}</div>
+//       <div style={{ fontSize: "0.8em", color: "gray" }}>{option.airport}</div>
+//       <div style={{ fontSize: "0.8em", color: "gray" }}>{option.address}</div>
+//     </div>
+//   ) : (
+//     value
+//   );
+// };
 
 const options: Option[] = [
   {
@@ -136,38 +106,7 @@ const options: Option[] = [
     airport: "Frankfurt Airport",
     address: "Frankfurt, Germany",
   },
-  // {
-  //   label: "France",
-  //   value: "France",
-  //   flag: IndianFlag,
-  //   city: "Paris", // City name for France
-  //   airport: "Charles de Gaulle Airport",
-  //   address: "Paris, France",
-  // },
-  // {
-  //   label: "Italy",
-  //   value: "Italy",
-  //   flag: IndianFlag,
-  //   city: "Rome", // City name for Italy
-  //   airport: "Leonardo da Vinci International Airport",
-  //   address: "Rome, Italy",
-  // },
-  // {
-  //   label: "Spain",
-  //   value: "Spain",
-  //   flag: IndianFlag,
-  //   city: "Madrid", // City name for Spain
-  //   airport: "Adolfo Suárez Madrid–Barajas Airport",
-  //   address: "Madrid, Spain",
-  // },
-  // {
-  //   label: "Japan",
-  //   value: "Japan",
-  //   flag: IndianFlag,
-  //   city: "Tokyo", // City name for Japan
-  //   airport: "Narita International Airport",
-  //   address: "Tokyo, Japan",
-  // },
+
   {
     label: "China",
     value: "China",
@@ -184,39 +123,7 @@ const options: Option[] = [
     airport: "Indira Gandhi International Airport",
     address: "New Delhi, India",
   },
-  // {
-  //   label: "Brazil",
-  //   value: "Brazil",
-  //   flag: IndianFlag,
-  //   city: "São Paulo", // City name for Brazil
-  //   airport:
-  //     "São Paulo/Guarulhos–Governador André Franco Montoro International Airport",
-  //   address: "São Paulo, Brazil",
-  // },
-  // {
-  //   label: "Mexico",
-  //   value: "Mexico",
-  //   flag: IndianFlag,
-  //   city: "Mexico City", // City name for Mexico
-  //   airport: "Mexico City International Airport",
-  //   address: "Mexico City, Mexico",
-  // },
-  // {
-  //   label: "South Africa",
-  //   value: "South Africa",
-  //   flag: IndianFlag,
-  //   city: "Johannesburg", // City name for South Africa
-  //   airport: "O.R. Tambo International Airport",
-  //   address: "Johannesburg, South Africa",
-  // },
-  // {
-  //   label: "Russia",
-  //   value: "Russia",
-  //   flag: IndianFlag,
-  //   city: "Moscow", // City name for Russia
-  //   airport: "Sheremetyevo International Airport",
-  //   address: "Moscow, Russia",
-  // },
+
   {
     label: "Bangalore",
     value: "Bangalore",
@@ -235,7 +142,7 @@ const options: Option[] = [
   },
 ];
 
-const ways = ["One-way", "Two-way", "Multi-City"];
+const ways = ["One way", "Round trip", "Multi-City"];
 const today = new Date();
 
 interface FlightSegment {
@@ -247,58 +154,82 @@ interface FlightSegment {
 
 const FlightListingPage: React.FC = () => {
   const dispatch = useDispatch();
-  const flightType = useSelector((state: any) => state.flight.flightType);
-  const disableReturnDateForOneWay = useSelector((state: any) => state?.flightBanner?.flightType);
-  const selectedAirlines = useSelector((state: any) => state?.flightBanner?.selectedAirlines);
-  const selectedSource = useSelector((state:any)=> state?.flightBanner?.departure);
-  const selectedDestination = useSelector((state:any)=> state?.flightBanner?.destination);
-  const selectedFlightOption = useSelector((state:any)=>state?.flightBanner?.flightOption);
-  const selectedDepartureDate = useSelector((state:any)=>state?.flightBanner?.departureDate);
-  
+
+  const selectedSource = useSelector(
+    (state: any) => state?.flightBanner?.departure
+  );
+  const selectedDestination = useSelector(
+    (state: any) => state?.flightBanner?.destination
+  );
+
+  const selectedFlightOption = useSelector(
+    (state: any) => state?.flightBanner?.flightOption
+  );
+
   const [fromResults, setFromResults] = useState<any[]>([]);
-  const [fromInput, setFromInput] = useState("");    // State for departure input
-  const [toInput, setToInput] = useState("");        // State for destination input
-  const [fromOptions, setFromOptions] = useState<any[]>([]);  // Options for departure autocomplete
-  const [toOptions, setToOptions] = useState<any[]>([]);
+  const [fromInput, setFromInput] = useState(""); // State for departure input
+  const [toInput, setToInput] = useState(""); // State for destination input
+  const [, setFromOptions] = useState<any[]>([]); // Options for departure autocomplete
+  const [, setToOptions] = useState<any[]>([]);
   const [toResults, setToResults] = useState<any[]>([]);
 
-// Function to format the date
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  const day = String(date.getUTCDate()).padStart(2, '0'); // Get day and pad with zero if needed
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0'); // Get month and pad with zero if needed
-  const year = date.getUTCFullYear(); // Get full year
-  return `${day}/${month}/${year}`; // Format to DD/MM/YYYY
-};
-
-const formattedDepartureDate = formatDate(selectedDepartureDate);
-console.log("formattedDepartureDate",formattedDepartureDate)
-
-
-  const [activeKey, setActiveKey] = React.useState("null");
-  const [isFocused, setIsFocused] = React.useState(false);
-  const [open, setOpen] = React.useState(false);
-  const [selectedValue, setSelectedValue] = React.useState<string | null>("Date");
+  const { flightType } = useSelector((state: any) => state?.flightBanner);
+  const intialDepartureDate = useSelector(
+    (state: RootState) => state?.flightBanner?.departureDate
+  );
+  const intialArrivalDate = useSelector(
+    (state: RootState) => state?.flightBanner?.returnDate
+  );
   const [departureDate, setDepartureDate] = React.useState<Date | null>(today);
-  
-
-  
   const [arrivalDate, setArrivalDate] = React.useState<Date | null>(null);
-  const [departurePickerOpen, setDeparturePickerOpen] = React.useState(false);
-  const [arrivalPickerOpen, setArrivalPickerOpen] = React.useState(false);
-  const [fromValue, setFromValue] = React.useState<string | null>();
-  const [toValue, setToValue] = React.useState<string | null | undefined>(null);
-  const [multiCityFlights, setMultiCityFlights] = React.useState<
-    FlightSegment[]
-  >([{ from: null, to: null, departureDate: today, arrivalDate: null }]);
+
+  useEffect(() => {
+    if (!intialDepartureDate) {
+      const today = new Date();
+      setDepartureDate(today);
+      const formatToday = formatDateStringToYYYYMMDD(today);
+      dispatch(setDepartureDates(formatToday));
+    } else {
+      setDepartureDate(new Date(intialDepartureDate));
+    }
+  }, [intialDepartureDate, dispatch]);
+
+  useEffect(() => {
+    if (!intialArrivalDate) {
+      const formatToday = formatDateStringToYYYYMMDD(
+        new Date(intialArrivalDate)
+      );
+      dispatch(setReturnDates(new Date(formatToday)));
+    } else {
+      const formatTodayy = formatDateStringToYYYYMMDD(
+        new Date(intialArrivalDate)
+      );
+      setArrivalDate(new Date(formatTodayy));
+      dispatch(setReturnDates(new Date(formatTodayy)));
+    }
+  }, [flightType, dispatch]);
+
+  useEffect(() => {
+    if (flightType !== "Round Trip") {
+      setArrivalDate(null); // Reset arrival date to null for "One Way"
+      dispatch(setReturnDates(null)); // Optionally reset the Redux state
+    }
+  }, [flightType, dispatch]);
+
+  const [, setIsFocused] = useState(false);
+  const [, setDeparturePickerOpen] = useState(false);
+  const [, setArrivalPickerOpen] = useState(false);
+  const [fromValue, setFromValue] = useState<string | null>();
+  const [toValue, setToValue] = useState<string | null | undefined>(null);
+  const [multiCityFlights, setMultiCityFlights] = useState<FlightSegment[]>([
+    { from: null, to: null, departureDate: today, arrivalDate: null },
+  ]);
 
   const adjustedFromValue: string | undefined =
     fromValue === null ? undefined : fromValue;
-    // dispatch(setDeparture(adjustedFromValue))
 
   const adjustedToValue: string | undefined =
     toValue === null ? undefined : toValue;
-    // dispatch(setDestination(adjustedToValue))
 
   const handleSwap = () => {
     setFromValue(toValue);
@@ -309,17 +240,19 @@ console.log("formattedDepartureDate",formattedDepartureDate)
     dispatch(setFlightOption(value as string));
   };
 
-  // const handleAirlinesChange = (value: string[]) => {
-  //   dispatch(setSelectedAirlines(value));  
-  // };
-
   const handleDepartureChange = (date: Date | null) => {
-
     setDepartureDate(date);
-    dispatch(setDepartureDates(date));
     setDeparturePickerOpen(false);
-    
+    if (date) {
+      // const today = new Date();
+      const formatToday = formatDateStringToYYYYMMDD(date);
+      dispatch(setDepartureDates(formatToday));
+    }
   };
+  useEffect(() => {
+    setToValue(`${selectedDestination?.city} - ${selectedDestination?.name}`);
+    setFromValue(`${selectedSource.city} - ${selectedSource.name}`);
+  }, []);
 
   const handleDestination = (e: any) => {
     setToValue(e);
@@ -327,59 +260,83 @@ console.log("formattedDepartureDate",formattedDepartureDate)
     const selectedOption = toResults.find(
       (option) => `${option.city} - ${option.name}` === e
     );
-    // Log the selected option's name and airport code, if found
     if (selectedOption) {
-      // Dispatch action to update destination in Redux store
-      dispatch(setDestination({
-        name: selectedOption?.name,
-        code: selectedOption?.code
-      }));
+      dispatch(
+        setDestination({
+          name: selectedOption?.name,
+          code: selectedOption?.code,
+          city: selectedOption?.city,
+        })
+      );
     }
-  }
+  };
+  useEffect(() => {
+    if (flightType === "One Way") {
+      dispatch(setReturnDates(null));
+    } else {
+      dispatch(setReturnDates(intialArrivalDate));
+    }
+  }, [flightType, dispatch]);
 
   const handleArrivalChange = (date: Date | null) => {
     setArrivalDate(date);
-    dispatch(setReturnDates(date))
     setArrivalPickerOpen(false);
+    if (date) {
+      // const today = new Date();
+      const formatToday = formatDateStringToYYYYMMDD(date);
+      dispatch(setReturnDates(formatToday));
+    }
   };
 
   const handleFlightTypeChange = (eventKey: string) => {
     dispatch(setFlightType(eventKey));
-    dispatch(setFlightTypeData(eventKey)); 
-
+    dispatch(setFlightTypeData(eventKey));
   };
+
+  useEffect(() => {
+    if (flightType) {
+      handleFlightTypeChange(flightType); // Trigger the handler with the updated flightType
+    }
+  }, [flightType]);
 
   const disableBeforeDeparture = (date?: Date): boolean => {
     if (!date || !departureDate) return false;
     return date < departureDate;
   };
 
-   // Generalized function to fetch airport options using fetchFlightFieldListData
-   const fetchAirportOptions = async (inputValue: string, setOptions: React.Dispatch<React.SetStateAction<any[]>>, setResults: React.Dispatch<React.SetStateAction<any[]>>) => {
+  // Generalized function to fetch airport options using fetchFlightFieldListData
+  const fetchAirportOptions = async (
+    inputValue: string,
+    setOptions: React.Dispatch<React.SetStateAction<any[]>>,
+    setResults: React.Dispatch<React.SetStateAction<any[]>>
+  ) => {
     if (inputValue) {
       try {
         const data = await fetchFlightFieldListData(inputValue, dispatch);
-        console.log("===data",data)
-        setResults(data?.response);  // Save the full API response
-        setOptions(Array.isArray(data) ? data.map((option: any) => ({
-          label: option.name,
-          value: `${option.code} - ${option.name}`, // Format for AutoComplete
-        })) : []);
+        setResults(data?.response); // Save the full API response
+        setOptions(
+          Array.isArray(data)
+            ? data.map((option: any) => ({
+                label: option.name,
+                value: `${option.code} - ${option.name}`, // Format for AutoComplete
+              }))
+            : []
+        );
       } catch (error) {
         console.error("Error fetching airport data:", error);
-        setOptions([]);  // Fallback to an empty array in case of an error
+        setOptions([]); // Fallback to an empty array in case of an error
       }
     }
   };
 
   // Fetch data for departure input
   useEffect(() => {
-    fetchAirportOptions(fromInput, setFromOptions, setFromResults);  // Store both options and raw results
+    fetchAirportOptions(fromInput, setFromOptions, setFromResults); // Store both options and raw results
   }, [fromInput]);
 
   // Fetch data for destination input
   useEffect(() => {
-    fetchAirportOptions(toInput, setToOptions, setToResults);  // Store both options and raw results
+    fetchAirportOptions(toInput, setToOptions, setToResults); // Store both options and raw results
   }, [toInput]);
 
   const handleDeparture = (e: any) => {
@@ -391,15 +348,19 @@ console.log("formattedDepartureDate",formattedDepartureDate)
     const selectedOption = fromResults?.find(
       (option) => `${option?.city} - ${option?.name}` === e
     );
+
     // Log the selected option's name and airport code, if found
     if (selectedOption) {
-      dispatch(setDeparture({
-        name: selectedOption?.name,
-        code: selectedOption?.code
-      }));
+      dispatch(
+        setDeparture({
+          name: selectedOption?.name,
+          code: selectedOption?.code,
+          city: selectedOption?.city,
+        })
+      );
     }
   };
-  
+
   // Handle Multi-City Segment Changes
   const handleAddSegment = () => {
     setMultiCityFlights([
@@ -433,7 +394,7 @@ console.log("formattedDepartureDate",formattedDepartureDate)
       ...updatedFlights[index],
       [field]: value,
     };
-
+    console.log("updatedFlightsSearch", updatedFlights);
     setMultiCityFlights(updatedFlights);
   };
 
@@ -447,21 +408,67 @@ console.log("formattedDepartureDate",formattedDepartureDate)
     };
     setMultiCityFlights(updatedFlights);
   };
+  // const handleSearchFlight = async () => {
+  //   console.log('onclick');
 
-  const handlesubmit = () => {
-    console.log("multiCityFlights", multiCityFlights);
-    console.log("fromValue", fromValue);
+  //   const payload = {
+  //     searchQuery: {
+  //       cabinClass: passengerDetails?.cabinClass,
+  //       paxInfo: {
+  //         ADULT: passengerDetails?.passengers?.adults,
+  //         CHILD: passengerDetails?.passengers?.children,
+  //         INFANT: passengerDetails?.passengers?.infants,
+  //       },
+  //       routeInfos: [
+  //         {
+  //           fromCityOrAirport: {
+  //             code: passengerDetails?.departure?.code,
+  //           },
+  //           toCityOrAirport: {
+  //             code: passengerDetails?.destination?.code,
+  //           },
+  //           travelDate: passengerDetails?.departureDate,
+  //         },
+  //       ],
+  //       searchModifiers: {
+  //         isDirectFlight: true,
+  //         isConnectingFlight: false,
+  //       },
+  //     },
+  //   };
+  //   console.log('payload',payload);
+
+  //   try {
+  //     // Assuming fetchFlightList returns a promise
+  //     await fetchListFlights(payload);
+  //     // Route to /flightlist after successful fetch
+  //     // router.push("/flightlist");
+  //     // navigate("/flightlist");
+  //     // navigate("/flightlist");
+  //   } catch (error) {
+  //     console.error("Error fetching flight list:", error);
+  //   }
+  // };
+
+  const renderMenuItem = (_label: React.ReactNode, item: any) => {
+    let option = fromResults?.find((opt) => opt.name === String(item.label));
+    if (!option) {
+      option = toResults?.find((opt) => opt.name === String(item.label));
+    }
+    return option ? (
+      <div>
+        <Row style={{ display: "flex", alignItems: "center" }}>
+          <Col style={{ textAlign: "left", alignItems: "center" }}>
+            {option.city}, {option.name}
+            <div style={{ fontSize: "0.8em", color: "gray" }}>
+              {option.code}
+            </div>
+          </Col>
+        </Row>
+      </div>
+    ) : null;
   };
 
-  //   const handleChange = (value: string | null) => {
-  //     setSelectedValue(value);
-
-  //     // Handle the selected value here
-  //   };
-
-  //   const handleIconClick = () => {
-  //     setOpen(!open); // Toggle the visibility of the calendar
-  //   };
   interface CustomDropdownProps {
     title: string;
     items: string[];
@@ -471,20 +478,27 @@ console.log("formattedDepartureDate",formattedDepartureDate)
   const CustomDropdown: React.FC<CustomDropdownProps> = ({
     title,
     items,
+
     ...props
-  }) => (
-    <div style={{ margin: "auto", width: "55%" }}>
-      <Dropdown
-        onSelect={handleFlightTypeChange} // Call the handle function on selection
-        title={flightType || "Select Flight Type"} // Use the Redux state as the title
-        style={{ marginBottom: "20px", paddingRight: "20px" }}
-      >
-        <Dropdown.Item eventKey="One Way">One Way</Dropdown.Item>
-        <Dropdown.Item eventKey="Round Trip">Round Trip</Dropdown.Item>
-        <Dropdown.Item eventKey="Multi City">Multi City</Dropdown.Item>
-      </Dropdown>
-    </div>
-  );
+  }) => {
+    console.log("props123", props);
+
+    const { flightType } = useSelector((state: any) => state?.flightBanner);
+    return (
+      <div style={{ margin: "auto", width: "55%" }}>
+        <Dropdown
+          // defaultValue={flightType}
+          onSelect={handleFlightTypeChange} // Call the handle function on selection
+          title={flightType || "Select Flight Type"} // Use the Redux state as the title
+          style={{ marginBottom: "20px", paddingRight: "20px" }}
+        >
+          <Dropdown.Item eventKey="One Way">One Way</Dropdown.Item>
+          <Dropdown.Item eventKey="Round Trip">Round Trip</Dropdown.Item>
+          <Dropdown.Item eventKey="Multi City">Multi City</Dropdown.Item>
+        </Dropdown>
+      </div>
+    );
+  };
   return (
     <Grid
       fluid
@@ -576,7 +590,7 @@ console.log("formattedDepartureDate",formattedDepartureDate)
                       </InputGroup.Addon>
 
                       <AutoComplete
-                        data={options.map((option) => ({
+                        data={options?.map((option) => ({
                           label: option.label,
                           value: option.value,
                           airport: option.airport,
@@ -585,7 +599,7 @@ console.log("formattedDepartureDate",formattedDepartureDate)
                         onFocus={() => setIsFocused(true)}
                         onBlur={() => setIsFocused(false)}
                         placeholder="Select a location"
-                        style={{fontWeight:"500"}}
+                        style={{ fontWeight: "500" }}
                         renderMenuItem={renderMenuItem}
                         value={
                           index === 0
@@ -673,7 +687,7 @@ console.log("formattedDepartureDate",formattedDepartureDate)
                           value: option.value,
                         }))}
                         placeholder="Select a location"
-                        style={{fontWeight:"500"}}
+                        style={{ fontWeight: "500" }}
                         onFocus={() => setIsFocused(true)}
                         onBlur={() => setIsFocused(false)}
                         renderMenuItem={renderMenuItem}
@@ -722,10 +736,11 @@ console.log("formattedDepartureDate",formattedDepartureDate)
                           />
                         </div>
                       </InputGroup.Addon>
-                      
+
                       <DatePicker
                         format="dd/MM/yyyy"
                         value={multiCityFlights[index]?.departureDate} // Ensure null fallback for safety
+                        shouldDisableDate={(date) => isBefore(date, new Date())}
                         onChange={(value) =>
                           handleMultiCityChange(index, "departureDate", value)
                         }
@@ -766,11 +781,11 @@ console.log("formattedDepartureDate",formattedDepartureDate)
                 </div>
               </Col>
 
-              <Col xs={24} sm={12} md={2}>
+              {/* <Col xs={24} sm={12} md={2}>
                 {index === 0 && (
-                  <TButton label="Search Flight" onClick={handlesubmit} />
+                  <TButton label="Search Flight" onClick={()=>handleSearchFlight()} />
                 )}
-              </Col>
+              </Col> */}
             </Row>
           ))}
         </Col>
@@ -786,33 +801,6 @@ console.log("formattedDepartureDate",formattedDepartureDate)
               margin: "0px auto",
             }}
           >
-            {/* <div style={{ display: "flex", gap: "10px" }}>
-              <Col xs={24} sm={12} md={4} lg={4} xl={2} xxl={2}>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    flex: 1,
-                    position: "relative",
-                  }}
-                >
-                  <Stack
-                    spacing={10}
-                    direction="column"
-                    alignItems="flex-start"
-                  >
-                    <CheckPicker
-                      data={data}
-                      searchable={false}
-                      style={{ width: "100%" }}
-                      value={selectedAirlines}
-                      onChange={handleAirlinesChange}  
-                      placeholder="Select Your Airlines"
-                    />
-                  </Stack>
-                </div>
-              </Col>
-            </div> */}
             <Col xs={24} sm={12} md={15}>
               <div
                 style={{
@@ -820,27 +808,25 @@ console.log("formattedDepartureDate",formattedDepartureDate)
                   flexDirection: "column",
                   flex: 1,
                   position: "relative",
-                  marginLeft:"20px"
+                  marginLeft: "20px",
                 }}
               >
                 <div
                   style={{
                     border: "1px solid white",
                     display: "flex",
-                     justifyContent: "space-evenly",
+                    justifyContent: "space-evenly",
                     background: "#fff",
                     borderRadius: "8px",
-
                   }}
                 >
-                  
                   <RadioGroup
                     name="radio-group-inline"
                     inline
                     // defaultValue="direct-flight"
-                    defaultValue={selectedFlightOption} 
+                    defaultValue={selectedFlightOption}
                     onChange={handleFlightOptionChange}
-                    style={{ gap: "30px", }}
+                    style={{ gap: "30px" }}
                   >
                     <Radio
                       // value="direct-flight"
@@ -850,8 +836,8 @@ console.log("formattedDepartureDate",formattedDepartureDate)
                       <span style={{ color: "black" }}> Direct flight</span>
                     </Radio>
                     <Radio
-                    color="red"
-                    value="Near By Airports"
+                      color="red"
+                      value="Near By Airports"
                       //value="nearby-airports"
                       style={{
                         paddingRight: "10px",
@@ -860,8 +846,8 @@ console.log("formattedDepartureDate",formattedDepartureDate)
                       <span style={{ color: "black" }}>Near By Airports</span>
                     </Radio>
                     <Radio
-                    color="red"
-                    value="Students Fare"
+                      color="red"
+                      value="Students Fare"
                       // value="student-fare"
                       style={{
                         paddingRight: "10px",
@@ -870,8 +856,8 @@ console.log("formattedDepartureDate",formattedDepartureDate)
                       <span style={{ color: "black" }}> Students Fare</span>
                     </Radio>
                     <Radio
-                    color="red"
-                    value="Senior Citizen Fare"
+                      color="red"
+                      value="Senior Citizen Fare"
                       //value="senior-citizen-fare"
                       style={{
                         paddingRight: "10px",
@@ -885,9 +871,9 @@ console.log("formattedDepartureDate",formattedDepartureDate)
                 </div>
               </div>
             </Col>
-            <Col xs={24} sm={12} md={2}>
-              <TButton label="Search Flight" onClick={handlesubmit} />
-            </Col>
+            {/* <Col xs={24} sm={12} md={2}>
+              <TButton label="Search Flight" onClick={()=>handleSearchFlight()} />
+            </Col> */}
           </Row>
           <Row
             className={styles.showgrid}
@@ -907,12 +893,12 @@ console.log("formattedDepartureDate",formattedDepartureDate)
                     justifyContent: "center", // Center the content within the column
                     // marginBottom: "20px",
                     marginTop: "20px", // Add marginTop to the main container
-                    marginLeft:"70px"
-                    
+                    marginLeft: "70px",
                   }}
                 >
                   <CustomDropdown
                     title="Select way"
+                    defaultValue={selectedFlightOption}
                     items={ways}
                     trigger="click"
                   />
@@ -947,7 +933,7 @@ console.log("formattedDepartureDate",formattedDepartureDate)
                       outline: "none",
                     }}
                   > */}
-                    {/* <InputGroup.Addon
+                  {/* <InputGroup.Addon
                       style={{
                         padding: "0 17px",
                         display: "flex",
@@ -970,7 +956,7 @@ console.log("formattedDepartureDate",formattedDepartureDate)
                         />
                       </div>
                     </InputGroup.Addon> */}
-                    {/* <AutoComplete
+                  {/* <AutoComplete
                       data={options.map((option) => ({
                         label: option.label,
                         value: option.value,
@@ -997,18 +983,23 @@ console.log("formattedDepartureDate",formattedDepartureDate)
                     }}
                   >
                     <AutoComplete
-                      data={fromResults.map((option) => ({
+                      data={fromResults?.map((option) => ({
                         label: option.name,
                         value: `${option.city} - ${option.name}`,
                         airport: option.name,
-                        address: option.country
+                        address: option.country,
                       }))}
                       onFocus={() => setIsFocused(true)}
                       onBlur={() => setIsFocused(false)}
                       placeholder="Select a location"
-                      style={{fontWeight:"500"}}
+                      style={{ fontWeight: "500" }}
                       renderMenuItem={renderMenuItem}
                       value={adjustedFromValue}
+                      //value={adjustedFromValue || `${departure?.city} - ${departure?.name}`}
+                      // value={
+                      //   adjustedFromValue ||
+                      //   `${selectedSource.city} - ${selectedSource.name}`
+                      // }
                       onChange={handleDeparture}
                     />
                   </InputGroup>
@@ -1056,57 +1047,23 @@ console.log("formattedDepartureDate",formattedDepartureDate)
                       marginLeft: "9px", // Add a small gap between the text fields
                     }}
                   >
-                    {/* <InputGroup.Addon
-                      style={{
-                        padding: "0 17px",
-                        display: "flex",
-                        alignItems: "center",
-                      }}
-                    >
-                      <div
-                        style={{
-                          position: "absolute",
-                          left: "12px",
-                          top: "50%",
-                          transform: "translateY(-50%)",
-                          zIndex: 1,
-                        }}
-                      >
-                        <Image
-                          src={Flightto}
-                          alt="Flight Icon"
-                          style={{ width: 20, height: 20 }}
-                        />
-                      </div>
-                    </InputGroup.Addon> */}
-                    {/* <AutoComplete
-                      data={options.map((option) => ({
-                        label: option.label,
-                        value: option.value,
-                      }))}
-                      placeholder="Select a location"
-                      style={{fontWeight:"500"}}
-                      onFocus={() => setIsFocused(true)}
-                      onBlur={() => setIsFocused(false)}
-                      renderMenuItem={renderMenuItem}
-                      // value={adjustedToValue}
-                      value={selectedDestination.name || adjustedFromValue}
-                      onChange={setToValue}
-                    /> */}
-
                     <AutoComplete
-                      data={toResults.map((option) => ({
+                      data={toResults?.map((option) => ({
                         label: option.name,
                         value: `${option.city} - ${option.name}`,
                         airport: option.name,
-                        address: option.country
+                        address: option.country,
                       }))}
                       placeholder="Select a location"
-                      style={{fontWeight:"500"}}
+                      style={{ fontWeight: "500" }}
                       onFocus={() => setIsFocused(true)}
                       onBlur={() => setIsFocused(false)}
                       renderMenuItem={renderMenuItem}
                       value={adjustedToValue}
+                      // value={
+                      //   adjustedFromValue ||
+                      //   `${selectedDestination?.city} - ${selectedDestination?.name}`
+                      // }
                       onChange={handleDestination}
                     />
                   </InputGroup>
@@ -1152,13 +1109,14 @@ console.log("formattedDepartureDate",formattedDepartureDate)
                     <DatePicker
                       format="dd/MM/yyyy"
                       value={departureDate}
+                      shouldDisableDate={(date) => isBefore(date, new Date())}
                       caretAs={CustomCaret}
                       onChange={handleDepartureChange}
                       // open={departurePickerOpen}
                       // onOpen={() => setDeparturePickerOpen(true)}
                       // onClose={() => setDeparturePickerOpen(false)}
                       placeholder="Departure Date"
-                      style={{ width: "100%", fontWeight:500 }}
+                      style={{ width: "100%", fontWeight: 500 }}
                     />
                   </InputGroup>
                 </div>
@@ -1204,15 +1162,16 @@ console.log("formattedDepartureDate",formattedDepartureDate)
                     <DatePicker
                       format="dd/MM/yyyy"
                       caretAs={CustomCaret}
-                      value={arrivalDate}
+                      value={flightType === "One Way" ? null : arrivalDate}
+                      shouldDisableDate={(date) => isBefore(date, new Date())}
                       onChange={handleArrivalChange}
                       // open={arrivalPickerOpen}
                       // onOpen={() => setArrivalPickerOpen(true)}
                       // onClose={() => setArrivalPickerOpen(false)}
                       placeholder="Click to add the return flight"
                       disabledDate={disableBeforeDeparture}
-                      style={{ width: "100%", fontWeight:500 }}
-                      disabled={disableReturnDateForOneWay === "One Way"} 
+                      style={{ width: "100%", fontWeight: 500 }}
+                      disabled={flightType === "One Way"}
                     />
                   </InputGroup>
                 </div>

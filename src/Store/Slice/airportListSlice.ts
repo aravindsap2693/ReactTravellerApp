@@ -6,6 +6,11 @@ const initialState: InitialStateProps = {
   loading: false,
   data: null,
   error: null,
+  onwardFlights: null,
+  returnFlights: null,
+  dynamicFilters: undefined,
+  twoWayDynamicFilters: undefined,
+  formattedData: undefined
 };
 
 const airportListSlice = createSlice({

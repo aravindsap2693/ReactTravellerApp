@@ -1,4 +1,11 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Amaranth:ital,wght@0,400;0,700;1,400;1,700&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Amaranth:ital,wght@0,400;0,700;1,400;1,700&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+
+
+* {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
 
 .main {
   display: flex;
@@ -9,11 +16,11 @@
 
 .statsSection {
   display: flex;
-  justify-content: space-around;
+  justify-content: space-evenly;
   align-items: center;
   flex-wrap: wrap;
   padding: 20px;
-  background: #f9f9f9;
+  background: #FEF6F5;
 }
 
 .statItem {
@@ -29,7 +36,7 @@
   display: flex;
   gap: 10px;
   align-items: center;
-  border-radius: 10px;
+  border-radius: 17px;
 }
 
 .iconWrapper {
@@ -76,7 +83,7 @@
 
 .header {
   /* background: #0770e3; */
-  background: #922568;
+  /* background: #922568; */
   color: #fff;
   display: flex;
   justify-content: flex-start;
@@ -85,8 +92,8 @@
 }
 
 .headerContent {
-  max-width: 1200px;
-  margin: 0 auto;
+  /* margin: 0 auto; */
+  text-align: left;
 }
 
 .headerText {
@@ -96,6 +103,7 @@
 
 .processSection {
   padding: 20px;
+  background-color: #F5F9FF;
 }
 
 .advantagesSection {
@@ -314,6 +322,7 @@
     backdrop-filter: blur(24px);
   }
 
+
   .description div {
     align-items: flex-end;
     pointer-events: none;
@@ -354,5 +363,3 @@
     transform: rotate(0deg);
   }
 }
-
-

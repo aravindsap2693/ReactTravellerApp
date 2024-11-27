@@ -1,4 +1,5 @@
-import React, { useState, useRef } from "react";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import React, { useState, useRef, useEffect } from "react";
 import { Dropdown, Button } from "rsuite";
 import styles from "../../assets/styles/flight-card.module.css"; // CSS module import
 import User from "../../../src/assets/images/User.svg";
@@ -16,15 +17,15 @@ const buttonList: string[] = ["Economy", "Premium Economy", "Business", "First C
 const FlightListDropdown: React.FC = () => {
   const dispatch = useDispatch();
   const [accordionOpen, setAccordionOpen] = useState<boolean>(false);
-  const [counts, setCounts] = useState<PassengerCounts>({
-    adults: 0,
+  const [, setCounts] = useState<PassengerCounts>({
+    adults: 1,
     children: 0,
     infants: 0,
   });
 
   const [type, setType] = useState<string>("Economy");
-  const passengerBookedDetails = useSelector((state: any) => state?.flightBanner?.passengers);
-  const passengerSelectedAirline = useSelector((state: any) => state?.flightBanner?.selectedAirline);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { cabinClass, passengers } = useSelector((state: any) => state?.flightBanner);
 
   const MAX_PASSENGERS = 9;
 
@@ -38,7 +39,7 @@ const FlightListDropdown: React.FC = () => {
   };
 
   // Add event listener on component mount
-  React.useEffect(() => {
+  useEffect(() => {
     document.addEventListener("click", handleClickOutside);
 
     // Cleanup event listener on component unmount
@@ -71,10 +72,12 @@ const FlightListDropdown: React.FC = () => {
   const handleCabinClass = (item: string) => {
     setType(item);
     dispatch(setCabinClass(item));
+    // Close the dropdown after selecting cabin class
+    setAccordionOpen(false);
   };
 
   return (
-    <div ref={dropdownRef} className={styles.dropdownContainer} style={{width:"100%"}}>
+    <div ref={dropdownRef} className={styles.dropdownContainer} style={{ width: "330px" }}>
       <Dropdown
         className={styles.dropdown}
         title={
@@ -83,16 +86,15 @@ const FlightListDropdown: React.FC = () => {
             alignItems: "center",
             fontSize: "12px",
             color: "black",
-            width:"330px",
-            fontWeight:"500"
+            width: "330px",
+            fontWeight: "500"
           }}>
             <img src={User} alt="User" width={22} height={22} className={styles.userIcon} />
-            Adults {passengerBookedDetails.adults || 0}, Children {passengerBookedDetails.children || 0}, Infants {passengerBookedDetails.infants || 0}, {passengerSelectedAirline}
+            Adults {passengers.adults || 0}, Children {passengers.children || 0}, Infants {passengers.infants || 0}, {cabinClass}
           </div>
         }
         open={accordionOpen}
         onClick={() => setAccordionOpen(!accordionOpen)}
-        onSelect={() => setAccordionOpen(true)}
         style={{
           border: "1px solid lightgrey",
           lineHeight: "0px",
@@ -100,81 +102,95 @@ const FlightListDropdown: React.FC = () => {
           backgroundColor: "white",
           borderRadius: "5px",
           display: "grid",
-          height:"39px",
+          height: "39px",
         }}
       >
         <Dropdown.Item style={{ backgroundColor: "white", width: "100%", height: "auto" }}>
+          {/* Passengers controls */}
           <div style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                borderBottom: "1px solid #d1d1d1",
-                padding: "10px 0px 10px 7px",
-                flexWrap: "wrap",
-                width:"100%"
-              }}>
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            borderBottom: "1px solid #d1d1d1",
+            padding: "10px 0px 10px 7px",
+            flexWrap: "wrap",
+            width: "100%"
+          }}>
             <div className={styles.passengerType}>
               <span>Adults</span>
               <div className={styles.passengerAge}>(Aged 12+ yrs)</div>
             </div>
             <div className={styles.passengerControls}>
               <Button onClick={() => handleDecrement("adults")}>-</Button>
-              <span className={styles.passengerCount} style={{fontWeight:"bold"}}>{passengerBookedDetails.adults || 0}</span>
+              <span className={styles.passengerCount} style={{ fontWeight: "bold" }}>{passengers.adults || 0}</span>
               <Button onClick={() => handleIncrement("adults")}>+</Button>
             </div>
-            </div>
-          
-              
-          {/* <div className={styles.dropdownItem}> */}
+          </div>
+
+          {/* Repeat for children and infants */}
           <div style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                borderBottom: "1px solid #d1d1d1",
-                padding: "10px 0px 10px 7px",
-                flexWrap: "wrap",
-                width:"100%"
-              }}>
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            borderBottom: "1px solid #d1d1d1",
+            padding: "10px 0px 10px 7px",
+            flexWrap: "wrap",
+            width: "100%"
+          }}>
             <div className={styles.passengerType}>
               <span>Children</span>
               <div className={styles.passengerAge}>(Aged 2-12 yrs)</div>
             </div>
             <div className={styles.passengerControls}>
               <Button onClick={() => handleDecrement("children")}>-</Button>
-              <span className={styles.passengerCount} style={{fontWeight:"bold"}}>{passengerBookedDetails.children || 0}</span>
+              <span className={styles.passengerCount} style={{ fontWeight: "bold" }}>{passengers.children || 0}</span>
               <Button onClick={() => handleIncrement("children")}>+</Button>
             </div>
           </div>
 
           <div style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                borderBottom: "1px solid #d1d1d1",
-                padding: "10px 0px 10px 7px",
-                flexWrap: "wrap",
-                width:"100%"
-              }}>
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            borderBottom: "1px solid #d1d1d1",
+            padding: "10px 0px 10px 7px",
+            flexWrap: "wrap",
+            width: "100%"
+          }}>
             <div className={styles.passengerType}>
               <span>Infants</span>
               <div className={styles.passengerAge}>(Below 2 yrs)</div>
             </div>
             <div className={styles.passengerControls}>
               <Button onClick={() => handleDecrement("infants")}>-</Button>
-              <span className={styles.passengerCount} style={{fontWeight:"bold"}}>{passengerBookedDetails.infants || 0}</span>
+              <span className={styles.passengerCount} style={{ fontWeight: "bold" }}>{passengers.infants || 0}</span>
               <Button onClick={() => handleIncrement("infants")}>+</Button>
             </div>
           </div>
 
-          <div className={styles.cabinClassOptions} style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                padding: "10px 0 5px",
-                flexWrap: "wrap",
-              }}>
-            {buttonList.map((item, i) => (
-              <Button key={i} onClick={() => handleCabinClass(item)} appearance="ghost" className={type === item ? styles.selectedCabinClass : ""}>
+          {/* Cabin class options */}
+          <div 
+            className={styles.cabinClassOptions} 
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              padding: "10px 0 5px",
+              flexWrap: "wrap",
+            }}
+          >
+            {buttonList.map((item, i: number) => (
+              <Button
+                key={i}
+                onClick={() => handleCabinClass(item)}
+                appearance="ghost"
+                style={{
+                  color: type === item ? "#FA503F" : "#666666",
+                  backgroundColor: type === item ? "#FEF6F5" : "#FFF",
+                  border: "1px solid #E5E5E5",
+                }}
+                className={type === item ? styles.selectedCabinClass : ""}
+              >
                 {item}
               </Button>
             ))}

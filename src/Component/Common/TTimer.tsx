@@ -1,16 +1,27 @@
-import { TimerProps } from "@/src/models/common.model";
-import React from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useEffect } from "react";
+import { TimerProps } from "../../Interfaces/models/common.model";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const TTimer: React.FC<TimerProps> = ({
   seconds = 0,
   fontColor = "gray",
   timeInSec,
 }) => {
-  const [time, setTime] = React.useState<number>(timeInSec ?? seconds); // Use timeInSec if provided, otherwise use seconds
+  const timeOut = useSelector((state: any) => state.tripData.st);
+  const [time, setTime] = React.useState<number>(timeInSec ?? seconds); 
 
-  React.useEffect(() => {
+  useEffect(() => {
+    if (timeOut) {
+      setTime(timeOut);
+    }
+  }, [timeOut]); 
+
+  useEffect(() => {
     const interval = setInterval(() => {
-      setTime((prevTime) => (prevTime > 0 ? prevTime - 1 : 0)); // Decrement the timer until it reaches 0
+      setTime((prevTime) => (prevTime > 0 ? prevTime - 1 : 0)); 
     }, 1000);
 
     return () => clearInterval(interval); // Clean up the interval on component unmount
@@ -21,7 +32,16 @@ const TTimer: React.FC<TimerProps> = ({
   const minutes = Math.floor((time % 3600) / 60);
   const secondsRemaining = time % 60;
 
+  const navigate = useNavigate();
   // Helper function to determine the color based on value
+  useEffect(() => {
+    if (hours === 0 && minutes === 0 && secondsRemaining === 0) {
+      toast.error("Time's up! Redirecting to Home...")
+      setTimeout(() => {
+        navigate("/home");
+      }, 3000);
+    }
+  }, [hours, minutes, navigate, secondsRemaining]);
 
   const getDisplayStyle: any = (value: number) => ({
     color: value > 600 ? "#50C878" : value > 0 ? fontColor : "gray",

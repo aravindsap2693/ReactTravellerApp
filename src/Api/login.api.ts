@@ -5,11 +5,7 @@ import {
   fetchLoginFailure,
   fetchLoginSuccess,
 } from "../Store/Slice/authSlice";
-import {
-  fetchLogoutStart,
-  fetchLogoutFailure,
-  fetchLogoutSuccess,
-} from "../Store/Slice/authSlice";
+import { AppThunk, clearStore } from "../Store/store";
 import env from "./Services/api";
 
 
@@ -29,16 +25,45 @@ export const login = (payload: LoginCredentials) => async (dispatch: any) => {
   }
 };
 
-export const handleLogout = async (dispatch: any, payload: any) => {
-  dispatch(fetchLogoutStart()); 
+// export const handleLogout = async (dispatch: any, payload: any) => {
+//   dispatch(fetchLogoutStart()); 
+//   try {
+//     const data = await env.post("v1/logout", payload);
+//     localStorage.removeItem("accessToken");
+//     dispatch(fetchLogoutSuccess(data));
+//     return data;
+//   } catch (error: any) {
+//     console.error(error);
+//     dispatch(fetchLogoutFailure(error)); 
+//     return error;
+//   }
+// };
+
+export const logout =
+  (navigate: any): AppThunk =>
+  async (dispatch, getState) => {
+    try {
+      await clearStore(); // Clear Redux state and persistent data
+      dispatch({ type: "LOGOUT_SUCCESS" }); // Update `isLogedin` in the store
+      const { auth } = getState(); // Get updated state
+      if (!auth.isLogedin) {
+        navigate("/"); // Redirect to the homepage if logged out
+      }
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
+  };
+
+
+export const forgetPassword = async (email: string) => {
   try {
-    const data = await env.post("auth/logout", payload);
-    localStorage.removeItem("accessToken");
-    dispatch(fetchLogoutSuccess(data));
-    return data;
+    const data = await env.post(`v1/users/forget-password?email=${email}`, {}); // Pass an empty object as the second argument
+    console.log("Forget Password Response:", data);
+    return data; // Return the response data
   } catch (error: any) {
-    console.error(error);
-    dispatch(fetchLogoutFailure(error)); 
-    return error;
+    console.error("Forget Password Error:", error);
+    return Promise.reject(error); // Return the error to be handled by the caller
   }
 };
+
+

@@ -1,35 +1,18 @@
-// FlightDetailsModal.tsx
-
 import React, { useState } from "react";
 import { Modal, Nav } from "rsuite";
 
-import AirlineIcon from "../../../assets/images/Indigo.svg"; // Adjust path as needed
 import TimerIcon from "../../../assets/images/Timer.svg"; // Adjust path as needed
 import styles from "../../../assets/styles/flight-modal.module.css";
 import TTable from "../../../Component/Common/TTable";
+
 // import TTable from "../../Common/TTable";
 
 interface FlightDetailsModalProps {
   open: boolean;
   onClose: () => void;
+  flight: any; // Adjust the type as needed
 }
 
-const flightInfo = {
-  departure: {
-    time: "05:35",
-    date: "Sun, 14 Jul 24",
-    airportCode: "BLR",
-    airportName: "Bengaluru International Airport, India",
-  },
-  arrival: {
-    time: "08:25",
-    date: "Sun, 14 Jul 24",
-    airportCode: "DEL",
-    airportName: "Indira Gandhi International Airport, India",
-  },
-  duration: "2hr 50 Min",
-  isNonStop: true,
-};
 const flightDetails = {
   navItems: [
     { eventKey: "BLR-DEL", label: "BLR - DEL" },
@@ -79,6 +62,8 @@ const flightDetails = {
 const FlightDetailsModal: React.FC<FlightDetailsModalProps> = ({
   open,
   onClose,
+  flight,
+
 }) => {
   const [activeKey, setActiveKey] = useState<string>("BLR-DEL");
   const headers = ["Baggage Type", "Check in Weight", "Cabin Weight"];
@@ -140,40 +125,7 @@ const FlightDetailsModal: React.FC<FlightDetailsModalProps> = ({
           </>
         )}
 
-        {activeKey === "BLR-DEL" && <FlightInfo />}
-        {/* {activeKey === 'Baggage-Inclusion' && (
-          <div style={{ marginTop: '20px' }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              padding: '10px',
-              backgroundColor: '#D9D9D9',
-              borderRadius: '10px',
-              border: '1px solid lightgrey'
-            }}>
-              <div style={{ flex: 1, textAlign: 'center', fontWeight: 'bold' }}>Baggage Type</div>
-              <div style={{ flex: 1, textAlign: 'center', fontWeight: 'bold' }}>Check-in</div>
-              <div style={{ flex: 1, textAlign: 'center', fontWeight: 'bold' }}>Cabin</div>
-            </div>
-
-            {flightDetails.baggageInclusion.map((item, index) => (
-              <div
-                key={index}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  padding: '10px',
-                  borderBottom: '1px solid lightgrey',
-                  borderRadius: index === flightDetails.baggageInclusion.length - 1 ? '0 0 10px 10px' : 'none'
-                }}
-              >
-                <div style={{ flex: 1, textAlign: 'center' }}>{item.type}</div>
-                <div style={{ flex: 1, textAlign: 'center' }}>{item.checkIn}</div>
-                <div style={{ flex: 1, textAlign: 'center' }}>{item.cabin}</div>
-              </div>
-            ))}
-          </div>
-        )} */}
+        {activeKey === "BLR-DEL" && <FlightInfo flight={flight} />}
         {activeKey === "Baggage-Inclusion" && (
           <TTable data={flightDetails.baggageInclusion} headers={headers} />
         )}
@@ -184,10 +136,13 @@ const FlightDetailsModal: React.FC<FlightDetailsModalProps> = ({
 
 export default FlightDetailsModal;
 
-export const FlightInfo: React.FC = () => {
+export const FlightInfo: React.FC<{ flight: any }> = ({ flight }) => {
+  if (!flight) return null;
+console.log(flight,"flight555")
+  const airlineCode = flight.icon.split("/").pop().split(".")[0];
   return (
-    <div style={{ display: "flex", padding: "10px 0"  }}>
-      <div style={{ borderRight: "1px solid lightgrey", paddingRight: "25px"}}>
+    <div style={{ display: "flex", padding: "10px 0" }}>
+      <div style={{ borderRight: "1px solid lightgrey", paddingRight: "25px" }}>
         <div
           style={{
             display: "flex",
@@ -197,25 +152,27 @@ export const FlightInfo: React.FC = () => {
         >
           <div style={{ marginRight: "10px" }}>
             <img
-              src={AirlineIcon}
+              src={`https://static.tripjack.com/img/airlineLogo/v1/${airlineCode}.png`}
               alt="Airline Icon"
-              width={45}
-              height={45}
+              width={28.65}
+              height={28.65}
+              style={{ borderRadius: "4px", marginRight: "10px" }}
             />
+
           </div>
           <div>
-            <p style={{ fontWeight: "500", fontSize: "18px" }}>IndiGo</p>
-            <span
+            <p style={{ fontWeight: "500", fontSize: "18px" }}>{flight?.airline}</p>
+            {/* <span
               style={{ fontWeight: "500", color: "#9E9E9E", fontSize: "14px" }}
             >
-              (PUIP)
-            </span>
+            {flight?.airline}
+            </span> */}
           </div>
         </div>
         <div style={{ color: "#019901", padding: "5px 0px" }}>
           Partially Refundable
         </div>
-        <div>Economy Class</div>
+        <div>{flight.class}</div>
       </div>
 
       <div
@@ -228,16 +185,16 @@ export const FlightInfo: React.FC = () => {
       >
         <div style={{ textAlign: "left" }}>
           <div style={{ fontWeight: "700", fontSize: "18px" }}>
-            {flightInfo.departure.time}
+            {flight.departure}
           </div>
-          <div style={{ color: "#9E9E9E" }}>{flightInfo.departure.date}</div>
+          <div style={{ color: "#9E9E9E" }}>{flight.departureDate}</div>
           <div
             style={{ fontWeight: "700", fontSize: "18px", marginTop: "10px" }}
           >
-            {flightInfo.departure.airportCode}
+            {flight.departureCode}
           </div>
           <div style={{ color: "#9E9E9E" }}>
-            {flightInfo.departure.airportName}
+            {flight.departureLocation}
           </div>
         </div>
 
@@ -246,25 +203,25 @@ export const FlightInfo: React.FC = () => {
         >
           <img src={TimerIcon} alt="Flight Duration" />
           <div style={{ fontWeight: "700", fontSize: "18px" }}>
-            {flightInfo.duration}
+            {flight.duration}
           </div>
           <div style={{ color: "#9E9E9E" }}>
-            {flightInfo.isNonStop ? "Non Stop" : ""}
+            {flight.durationDetails}
           </div>
         </div>
 
         <div style={{ textAlign: "left", paddingLeft: "20px" }}>
           <div style={{ fontWeight: "700", fontSize: "18px" }}>
-            {flightInfo.arrival.time}
+            {flight.arrival}
           </div>
-          <div style={{ color: "#9E9E9E" }}>{flightInfo.arrival.date}</div>
+          <div style={{ color: "#9E9E9E" }}>{flight.arrivalDate}</div>
           <div
             style={{ fontWeight: "700", fontSize: "18px", marginTop: "10px" }}
           >
-            {flightInfo.arrival.airportCode}
+            {flight.arrivalCode}
           </div>
           <div style={{ color: "#9E9E9E" }}>
-            {flightInfo.arrival.airportName}
+            {flight.arrivalLocation}
           </div>
         </div>
       </div>

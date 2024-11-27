@@ -1,98 +1,50 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import {
+  BookingState,
+  DeliveryInfo,
+  GstInfo,
+  PaymentInfo,
+  TravellerInfo,
+} from "../../Interfaces/models/booking.model";
 
 // Define the types for each part of the state
-interface SsrInfo {
-  key: string;
-  code: string;
-}
-
-interface TravellerInfo {
-  ti: string; 
-  fN: string; 
-  lN: string; 
-  pt: string; 
-  dob: string; 
-  pid: string; 
-  pNat: string; 
-  pNum: string; 
-  eD: string; 
-  ssrBaggageInfos: SsrInfo[];
-  ssrMealInfos: SsrInfo[];
-  ssrSeatInfos: SsrInfo[];
-  mobile: string;    
-  email: string;     
-  aadharNumber: string;    
-}
-
-interface PaymentInfo {
-  amount: number;
-}
-
-interface GstInfo {
-  gstNumber: string;
-  email: string;
-  registeredName: string;
-  mobile: string;
-  address: string;
-}
-
-interface DeliveryInfo {
-  emails: string[];
-  contacts: string[];
-}
-
-// Define the initial state with types
-interface BookingState {
-  bookingId: string;
-  paymentInfos: PaymentInfo[];
-  travellerInfo: TravellerInfo[];
-  gstInfo: GstInfo;
-  contactInfo: DeliveryInfo;
-  errors : string;
-}
-
 const initialState: BookingState = {
-  bookingId: '',
+  bookingId: "",
+  totalAmount: 0,
   paymentInfos: [],
   travellerInfo: [],
   gstInfo: {
-    gstNumber: '',
-    email: '',
-    registeredName: '',
-    mobile: '',
-    address: '',
+    gstNumber: "",
+    email: "",
+    registeredName: "",
+    mobile: "",
+    address: "",
   },
   contactInfo: {
     emails: [],
     contacts: [],
   },
-  errors : '',
+  errors: "",
 };
 
 const bookingSlice = createSlice({
-  name: 'bookingPayload',
+  name: "bookingPayload",
   initialState,
   reducers: {
     setBookingId: (state, action: PayloadAction<string>) => {
       state.bookingId = action.payload;
     },
+    setTotalAmount: (state, action: PayloadAction<number>) => {
+      state.totalAmount = action.payload;
+    },
     setErrorCode: (state, action: PayloadAction<string>) => {
-      state.errors = action.payload; 
+      state.errors = action.payload;
     },
     setPaymentInfos: (state, action: PayloadAction<PaymentInfo[]>) => {
       state.paymentInfos = action.payload;
     },
-    addTravellerInfo: (state, action: PayloadAction<TravellerInfo>) => {
-      state.travellerInfo.push(action.payload);
-    },
-    updateTravellerInfo: (
-      state,
-      action: PayloadAction<{ index: number; travellerData: TravellerInfo }>
-    ) => {
-      const { index, travellerData } = action.payload;
-      if (state.travellerInfo[index]) {
-        state.travellerInfo[index] = travellerData;
-      }
+    addTravellerInfo: (state, action: PayloadAction<TravellerInfo[]>) => {
+      state.travellerInfo = action.payload;
     },
     setGstInfo: (state, action: PayloadAction<GstInfo>) => {
       state.gstInfo = action.payload;
@@ -103,19 +55,20 @@ const bookingSlice = createSlice({
     resetBookingState: () => {
       return initialState;
     },
+    
   },
 });
 
 export const {
   setBookingId,
+  setTotalAmount,
   setErrorCode,
   setPaymentInfos,
   addTravellerInfo,
-  updateTravellerInfo,
   setGstInfo,
   setContactInfo,
   resetBookingState,
 } = bookingSlice.actions;
 
-const bookingDetailsReducer = bookingSlice.reducer
+const bookingDetailsReducer = bookingSlice.reducer;
 export default bookingDetailsReducer;

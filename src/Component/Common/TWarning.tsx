@@ -1,11 +1,12 @@
-import Image from "next/image";
+// import Image from "next/image";
 import React from "react";
 import InfoIcon from "../../assets/icons/InfoIcon.svg";
+
 
 const TWarning: React.FC<{ content: string }> = ({ content }) => {
   return (
     <div style={infoBoxStyle}>
-      <Image src={InfoIcon} alt="Info Icon" width={26} height={26} />
+      <img src={InfoIcon} alt="Info Icon" width={26} height={26} />
       <span>{content}</span>
     </div>
   );

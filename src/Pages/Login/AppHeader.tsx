@@ -1,22 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useRef } from "react";
+import React, { useRef } from "react";
 import { Navbar, Nav, Dropdown, Avatar, Tag, IconButton } from "rsuite";
-import MoreIcon from "../../assets/Images/Trippledot.svg"
-import Logo from "../../assets/Images/Tripvista_Logos.svg";
+import MoreIcon from "../../assets/images/Trippledot.svg";
+import Logo from "../../assets/images/Tripvista_Logos.svg";
 import "../../assets/styles/home.module.css";
 import "../../App.css";
 import DetailIcon from "@rsuite/icons/Detail";
 import TButton from "../../Component/Common/TButton";
 import { HOME } from "../../Utils/Constant/constant";
 import Login from "./Login";
-
-
-interface User {
-  balance?: number;
-  Profile?: string; // Change this to string | null if the profile can be null
-  first_name?: string;
-  last_name?: string;
-}
+import { useDispatch, useSelector } from "react-redux";
+// import { handleLogout } from "../../Api/login.api";
+import { useLocation, useNavigate } from "react-router-dom";
+import { logout } from "../../Api/login.api";
+import { AppDispatch } from "../../Store/store";
 
 const renderIconButton = (props: any, ref: React.Ref<HTMLButtonElement>) => {
   return (
@@ -29,36 +26,33 @@ const renderIconButton = (props: any, ref: React.Ref<HTMLButtonElement>) => {
     />
   );
 };
-const loginMenu = [
-  { label: "Get Started", eventKey: "getstarted" },
-  { eventKey: "subusers", label: "Sub users" },
-  { label: "Careers", eventKey: "careers" },
-  { label: "Contact us", eventKey: "contactus" },
-];
-
+// const loginMenu = [
+//   { label: "Get Started", eventKey: "getstarted" },
+//   { eventKey: "subusers", label: "Sub users" },
+//   { label: "Careers", eventKey: "careers" },
+//   { label: "Contact us", eventKey: "contactus" },
+// ];
 const AppHeader: React.FC = () => {
-  const [isLoggedin, setIsLoggedin] = useState<boolean>(false);
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const showLogin = !location.pathname.includes("/register"); // Hide footer if URL contains "/register"
 
-  const user: User = {
-    balance: 45000,
-    first_name: "John",
-    last_name: "Doe",
-    Profile: Logo, // or path to the user's profile image
-  };
+  // const router = useRouter();
+  const loginRef = useRef<any>(null); // Create a ref for Login component
+  const user = useSelector((state: any) => state.auth.data);
+  const isLogedin = useSelector((state: any) => state.auth.isAuthenticated);
 
-  // Create a ref to control the Login component
-  const loginRef = useRef<{ openModal: () => void }>(null);
-
+  const authToken: string | null = useSelector(
+    (state: any) => state.auth.token
+  );
+  console.log("user", user);
+  console.log("isLogedin", isLogedin);
+  console.log("authToken", authToken);
+  
   const handleLogOut = () => {
-    setIsLoggedin(false);
+    dispatch(logout(navigate)); // Pass navigate to the thunk
   };
-
-  const handleLoginClick = () => {
-    if (loginRef.current) {
-      loginRef.current.openModal(); 
-    }
-  };
-
   return (
     <>
       <Navbar
@@ -72,89 +66,109 @@ const AppHeader: React.FC = () => {
       >
         <div
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            // display: "flex",
+            // justifyContent: "space-between",
+            // alignItems: "center",
             width: "100%",
-            padding: "0px 20px",
+            padding: "0px 50px",
           }}
         >
-          {/* Logo section aligned to the left */}
-          <Nav style={{ cursor: "pointer", justifyContent: "flex-start" }}>
-            <a href={HOME}>
-              <img src={Logo} alt="Logo" style={{ maxHeight: "50px" }} />
-            </a>
-          </Nav>
-
-          {/* Navigation and user section aligned to the right */}
-          <Nav
+          <div
             style={{
               display: "flex",
-              justifyContent: "flex-end",
-              cursor: "pointer",
-              gap: "15px",
+              justifyContent: "space-between",
+              alignItems: "center",
+              width: "100%",
+              padding: "0px 20px",
             }}
           >
-            {!isLoggedin ? (
-              <>
-                {loginMenu.map((item) => (
-                  <Nav.Item key={item.eventKey} eventKey={item.eventKey}>
-                    {item.label}
-                  </Nav.Item>
-                ))}
-                {/* Login Button opens the Login modal */}
-                <TButton label="Login" type="primary" onClick={handleLoginClick} />
-              </>
+            {/* Logo section aligned to the left */}
+            <Nav style={{ cursor: "pointer", justifyContent: "flex-start" }}>
+              <a href={HOME}>
+                <img src={Logo} alt="Logo" style={{ maxHeight: "50px" }} />
+              </a>
+            </Nav>
+            {!isLogedin && (
+              <Nav style={{ cursor: "pointer" }}>
+                {/* {loginMenu.map((item) => (
+                <Nav.Item key={item.eventKey} eventKey={item.eventKey}>
+                  {item.label}
+                </Nav.Item>
+              ))} */}
+              </Nav>
+            )}
+            {!isLogedin ? (
+              <Nav
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  cursor: "pointer",
+                  marginRight: "0px",
+                }}
+              >
+                {showLogin && (
+                  <TButton
+                    label="Agent Login"
+                    type="primary"
+                    onClick={() => {
+                      loginRef.current.openModal();
+                    }}
+                    style={{ fontWeight: 600 }}
+                  />
+                )}
+              </Nav>
             ) : (
               <>
-                <Tag size="lg" color="blue">
-                  My Balance: {user.balance ? `$${user.balance}` : "$0"}
-                </Tag>
-                <div
-                  className="user_section"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    marginLeft: "10px",
-                  }}
-                >
-                  <Avatar src={user.Profile || undefined} circle />
-                  <span style={{ marginLeft: "10px" }}>
-                    {user.first_name && user.last_name
-                      ? `${user.first_name} ${user.last_name}`
-                      : "Guest"}
-                  </span>
-                  <div id="icon-dropdown">
-                    <Dropdown
-                      renderToggle={renderIconButton}
-                      placement="bottomEnd"
-                    >
-                      <Dropdown.Item icon={<DetailIcon />}>
-                        My Profile
-                      </Dropdown.Item>
-                      <Dropdown.Item icon={<DetailIcon />} onClick={handleLogOut}>
-                        Log Out
-                      </Dropdown.Item>
-                    </Dropdown>
+                <Nav>
+                  <div
+                    className="user_section"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      marginLeft: "10px",
+                    }}
+                  >
+                    <Nav style={{ cursor: "pointer", marginRight: "10px" }}>
+                      <Tag size="lg" color="blue">
+                        MyBalance :{" "}
+                        {user.response.currentWalletBalance
+                          ? user.response.currentWalletBalance
+                          : "$45000"}
+                      </Tag>
+                    </Nav>
+                    <Avatar src={user.Profile ? user.Profile : null} circle />
+                    <span style={{ marginLeft: "10px", fontWeight: "bold" }}>
+                      {user
+                        ? user.response.userModel.firstName +
+                          " " +
+                          user.response.userModel.lastName
+                        : "Guest"}
+                    </span>
+                    <div id="icon-dropdown">
+                      <Dropdown
+                        renderToggle={renderIconButton}
+                        placement="bottomEnd"
+                      >
+                        <Dropdown.Item icon={<DetailIcon />}>
+                          My profile
+                        </Dropdown.Item>
+                        <Dropdown.Item
+                          icon={<DetailIcon />}
+                          onClick={handleLogOut}
+                        >
+                          Log out
+                        </Dropdown.Item>
+                      </Dropdown>
+                    </div>
                   </div>
-                </div>
+                </Nav>
               </>
             )}
-          </Nav>
+          </div>
         </div>
       </Navbar>
-
-      {/* Render Login component and pass ref */}
       <Login ref={loginRef} />
     </>
   );
 };
 export default AppHeader;
-
-
-
-
-
-
-
-

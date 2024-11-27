@@ -11,3 +11,8 @@ export interface CityResponse {
   message: string;       // Message about the response
   response: cityItemProps[]; // Array of city items
 }
+
+export interface CityListProps {
+  data: any[];
+  error: string | null;
+}

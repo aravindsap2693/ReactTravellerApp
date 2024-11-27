@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { Placeholder, Tabs } from "rsuite";
 import styles from "../../assets/styles/booking.module.css";
-import { TTabProps } from "@/src/models/common.model";
+import { TTabProps } from "../../Interfaces/models/common.model";
+
 
 const TTab: React.FC<TTabProps> = ({ TabNav }) => {
   const [selectedNav, setSelectedNav] = useState<string>(TabNav[0]?.key);

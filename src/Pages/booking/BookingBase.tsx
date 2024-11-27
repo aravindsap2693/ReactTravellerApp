@@ -38,6 +38,7 @@ import FareRule from "./FareRule";
 // import { fetchFlightReviews } from "../../Store/Slice/flightReviewSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../Store/store";
+import { setFareDetailsListt } from "../../Store/Slice/fareDetailsSlice";
 
 import {
   addTravellerInfo,
@@ -46,57 +47,15 @@ import {
   setGstInfo,
 } from "../../Store/Slice/bookingPayloadSlice";
 import StepperHeader from "./StepperHeader";
-import TForm from "../../Component/Common/TForm";
 
 import { reviewBooking } from "../../Api/reviewFlight.api";
-
-interface GstInfo {
-  gstNumber: string;
-  email: string;
-  registeredName: string;
-  mobile: string;
-  address: string;
-}
-
-interface FlightDetails {
-  id: string;
-  sI: {
-    id: string;
-    fD: {
-      aI: {
-        code: string;
-        name: string;
-        isLcc: boolean;
-      };
-      fN: string;
-      eT: string;
-    };
-    stops: number;
-    duration: number;
-    da: {
-      code: string;
-      name: string;
-      cityCode: string;
-      city: string;
-      country: string;
-      countryCode: string;
-    };
-    aa: {
-      code: string;
-      name: string;
-      cityCode: string;
-      city: string;
-      country: string;
-      countryCode: string;
-      terminal: string;
-    };
-    dt: string;
-    at: string;
-    iand: boolean;
-    isRs: boolean;
-    sN: number;
-  }[];
-}
+import {
+  setSearchQuery,
+  setSt,
+  setTotalPriceInfo,
+  setTripInfos,
+} from "../../Store/Slice/tripDataSlice";
+import { FlightDetails } from "../../Interfaces/models/flight.model";
 
 const fontColor: string = "#F88D02";
 
@@ -147,28 +106,12 @@ const ContectFields = [
   },
 ];
 
-// const flightDetails = {
-//   fareRules: [
-//     {
-//       title: "Additional Information",
-//       content: [
-//         "* GST and RAF charges will be applicable on the cancellation penalty.",
-//         "* The above data is indicative, fare rules are subject to changes by the airline depending upon Fare class, and change/cancellation fee amounts may fluctuate in currency conversion rates.",
-//         "* Although we try to keep this section updated regularly.",
-//         "* Cancellation/Reissue fee will follow the more restrictive fare type.",
-//         "* Feel free to call our Contact Centre for exact cancellation/change fee.",
-//         "* Cancellation/date change request will be accepted 30hrs prior to departure.",
-//       ],
-//     },
-//   ],
-// };
-
 const steperList = [
   {
     title: "Flight Itinerary",
   },
   {
-    title: "Traveller Details",
+    title: "Add ons",
   },
   {
     title: "Seat Selection",
@@ -201,12 +144,22 @@ const GSTFields = [
 
 const BookingBase: React.FC = () => {
   const flightId = useSelector((state: RootState) => state.booking.flightId);
+  const onwardFlightId = useSelector(
+    (state: RootState) => state.booking.onwardFlightId
+  );
+  const returnFlightId = useSelector(
+    (state: RootState) => state.booking.returnFlightId
+  );
+  const flightType = useSelector((state: RootState) => state.flight.flightType);
+  const totalAmount = useSelector(
+    (state: RootState) => state.bookingPayload.totalAmount
+  );
   const errorMessages = useSelector(
     (state: RootState) => state.bookingPayload.errors
   );
   console.log(errorMessages, "errorMessages");
   const travellerInfo = useSelector(
-    (state: RootState) => state.bookingPayload?.travellerInfo
+    (state: any) => state.bookingPayload?.travellerInfo
   );
   const gstInfo = useSelector((state: any) => state.bookingDetails?.gstInfo);
   const contactUser = useSelector(
@@ -227,22 +180,93 @@ const BookingBase: React.FC = () => {
   //     [name]: value,
   //   }));
   // };
+
   const passengers = useSelector((state: any) => state.flightBanner.passengers);
   const [step, setStep] = useState<number>(0);
-  const [showAccordion, setShowAccordion] = useState<boolean>(true);
-  const [isAccordionExpanded, setIsAccordionExpanded] =
-    useState<boolean>(false);
   const [openModal, setOpenModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleNextStep = () => {
-    setStep((prevStep) => Math.min(prevStep + 1, 4));
-    setShowAccordion(false);
+  function findEmptySpecificFields(data: { [x: string]: string }, path = "") {
+    let emptyFields: any[] = [];
+    let fieldsToCheck: string | string[] = [];
+    fieldsToCheck = ["email", "firstName", "lastName", "mobile"];
+
+    for (let key in data) {
+      const currentPath = path ? `${path}.${key}` : key;
+
+      if (typeof data[key] === "object" && data[key] !== null) {
+        // Recursively check nested objects or arrays
+        emptyFields = emptyFields.concat(
+          findEmptySpecificFields(data[key], currentPath)
+        );
+      } else if (fieldsToCheck.includes(key) && data[key] === "") {
+        // If the field is in fieldsToCheck and is empty, store the path
+        emptyFields.push(currentPath);
+      }
+    }
+
+    return emptyFields;
+  }
+  const goStep = (emptyValidate: any[]) => {
+    if (emptyValidate.length == 0) {
+      setStep((prevStep) => Math.min(prevStep + 1, 4));
+    }
   };
+  const handleNextStep = () => {
+    if (step == 0) {
+      setStep((prevStep) => Math.min(prevStep + 1, 4));
+    }
+    if (step == 1) {
+      const emptyValidate = findEmptySpecificFields(passengerData);
+      goStep(emptyValidate);
+    }
+    if (step == 1) {
+      if (gstData?.gstin == "") {
+        setStep((prevStep) => Math.min(prevStep + 1, 4));
+      } else {
+        if (gstData?.gstin !== undefined && gstData?.gstin !== "") {
+          if (
+            gstData?.gstinMobile !== "" &&
+            gstData?.gstinEmail &&
+            gstData?.gstinPhone !== ""
+          ) {
+            setStep((prevStep) => Math.min(prevStep + 1, 4));
+          }
+        }
+      }
+    }
+    if (step == 3) {
+      if (
+        contactDetails?.email_id !== undefined &&
+        contactDetails?.mobile_number !== undefined
+      ) {
+        if (
+          contactDetails?.email_id !== "" &&
+          contactDetails?.mobile_number !== ""
+        ) {
+          setStep((prevStep) => Math.min(prevStep + 1, 4));
+        }
+      }
+    }
+    if (step == 2) {
+      if (
+        contactDetails?.email_id !== undefined &&
+        contactDetails?.mobile_number !== undefined
+      ) {
+        if (
+          contactDetails?.email_id !== "" &&
+          contactDetails?.mobile_number !== ""
+        ) {
+          setStep((prevStep) => Math.min(prevStep + 1, 4));
+        }
+      }
+    }
+  };
+
   const [flightDetails, setFlightDetails] = useState<FlightDetails[]>([]);
   const [fareDetailsList, setFareDetailsList] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [passengerData, setPassengerData] = useState({
+  const [passengerData, setPassengerData] = useState<any>({
     adults: Array.from({ length: passengers.adults }, (_, index) => ({
       title: travellerInfo[index]?.title || "",
       firstName: travellerInfo[index]?.firstName || "",
@@ -295,14 +319,21 @@ const BookingBase: React.FC = () => {
 
   const [gstData, setGstData] = useState({
     gstNumber: gstInfo?.gstNumber || "",
-    mobile: gstInfo?.mobile || "",
     email: gstInfo?.email || "",
-    phone: gstInfo?.phone || "",
+    registeredName: gstInfo?.registeredName || "",
+    mobile: gstInfo?.mobile || "",
+    address: gstInfo?.address || "",
+    gstin: gstInfo?.gstin || "",
+    gstinMobile: gstInfo?.gstinMobile || "",
+    gstinEmail: gstInfo?.gstinEmail || "",
+    gstinPhone: gstInfo?.gstinPhone || "",
   });
 
   const [contactDetails, setContactDetails] = useState({
     emails: contactUser?.emails || "",
     contacts: contactUser?.contacts || "",
+    email_id: contactUser?.contacts || "",
+    mobile_number: contactUser?.mobile_number || "",
   });
 
   const dispatch = useDispatch<AppDispatch>();
@@ -471,50 +502,172 @@ const BookingBase: React.FC = () => {
   //     // Show modal for unexpected errors
   //   }
   // };
-
   useEffect(() => {
-    if (flightId) {
-      // Call the API when the component mounts or flightId changes
-      callBookingApi(flightId, dispatch);
+    if (flightType === "One Way") {
+      // Call the API when the component mounts or flightId changes for One Way
+      callBookingApi(flightType, flightId, null, null, dispatch);
+    } else if (flightType === "Round Trip") {
+      // Call the API when the component mounts or flight IDs change for round trip
+      callBookingApi(
+        flightType,
+        null,
+        onwardFlightId,
+        returnFlightId,
+        dispatch
+      );
     }
-  }, [flightId]);
+    console.log("-==flightDetail", flightDetails);
+  }, [dispatch, flightType, flightId, onwardFlightId, returnFlightId]);
 
-  const callBookingApi = async (flightId: string, dispatch: AppDispatch) => {
-    const payload = {
-      priceIds: [flightId],
-    };
+  const callBookingApi = async (
+    flightType: string,
+    flightId: string | null,
+    onwardFlightId: string | null,
+    returnFlightId: string | null,
+    dispatch: AppDispatch
+  ) => {
+    const payload =
+      flightType === "One Way"
+        ? { priceIds: [flightId] }
+        : { priceIds: [onwardFlightId, returnFlightId].filter(Boolean) }; // Filter out null values
+
     setLoading(true);
+
     try {
       const apiResponse = await dispatch(reviewBooking(payload));
+
       if (apiResponse) {
         const data = apiResponse;
-        dispatch(setBookingId(data.bookingId));
 
-        // Check for errors in the response
+        dispatch(setBookingId(data.bookingId));
+        dispatch(setTripInfos(data.tripInfos));
+        dispatch(setSearchQuery(data.searchQuery));
+        dispatch(setTotalPriceInfo(data.totalPriceInfo));
+
+        // Handle setting 'st' from conditions properly
+        if (data.conditions?.st) {
+          dispatch(setSt(data.conditions.st)); // Assuming conditions is not inside tripInfos
+        } else {
+          console.error("Missing 'st' in conditions.");
+        }
+
+        // Check for status errors
         if (data.status === "Error") {
           setOpenModal(true);
         }
-        if (data?.tripInfos) {
-          setFlightDetails(data.tripInfos);
 
-          const tripInfos = data.tripInfos;
-          console.log(tripInfos, "tripInfos");
+        // Handle tripInfos data
+        if (flightType === "One Way") {
+          if (data?.tripInfos) {
+            setFlightDetails(data.tripInfos);
 
-          // Extract fare details from tripInfos
-          const fareDetailsList = tripInfos
-            .flatMap((tripInfo: any) => {
-              return tripInfo.totalPriceList.map((priceInfo: any) => {
-                const fareDetails = priceInfo?.fd?.ADULT?.fC;
-                const additionalFareDetails = priceInfo?.fd?.ADULT?.afC?.TAF;
+            const tripInfos = data.tripInfos;
+            console.log(tripInfos, "tripInfos");
 
-                if (!fareDetails || !additionalFareDetails) {
-                  console.error(
-                    "Fare details missing for this priceInfo:",
-                    priceInfo
-                  );
-                  return null;
-                }
+            // Extract fare details safely from tripInfos
+            const fareDetailsList = tripInfos
+              .flatMap((tripInfo: any) => {
+                return tripInfo.totalPriceList.map((priceInfo: any) => {
+                  const fareDetails = priceInfo?.fd?.ADULT?.fC;
+                  const additionalFareDetails = priceInfo?.fd?.ADULT?.afC?.TAF;
 
+                  // Safely handle missing fare details
+                  if (!fareDetails || !additionalFareDetails) {
+                    console.error(
+                      "Fare details missing for this priceInfo:",
+                      priceInfo
+                    );
+                    return null;
+                  }
+
+                  const totalAmount = `₹${fareDetails.TF || 0}`;
+                  const FareDetailsList = [
+                    { title: "Base Fare", value: `₹${fareDetails.BF || 0}` },
+                    {
+                      title: "Total Amount (Fare)",
+                      value: `₹${fareDetails.TAF || 0}`,
+                    },
+                    {
+                      title: "Other Charges (OT)",
+                      value: `₹${additionalFareDetails.OT || 0}`,
+                    },
+                    {
+                      title: "Miscellaneous Charges",
+                      value: `₹${additionalFareDetails.MU || 0}`,
+                    },
+                    {
+                      title: "Yearly Charges",
+                      value: `₹${additionalFareDetails.YR || 0}`,
+                    },
+                    {
+                      title: "AGST",
+                      value: `₹${additionalFareDetails.AGST || 0}`,
+                    },
+                  ];
+                  return { list: FareDetailsList, Total: totalAmount };
+                });
+              })
+              .filter(Boolean); // Removes null or undefined entries
+
+            setFareDetailsList(fareDetailsList);
+            dispatch(setFareDetailsListt(fareDetailsList));
+          } else {
+            console.error("Invalid data structure:", data);
+          }
+        } else if (flightType === "Round Trip") {
+          if (data?.totalPriceInfo?.totalFareDetail) {
+            setFlightDetails(data.tripInfos);
+            const totalFareDetail = data.totalPriceInfo.totalFareDetail;
+            let fareDetailsList = [];
+
+            if (Array.isArray(totalFareDetail)) {
+              fareDetailsList = totalFareDetail.flatMap((tripInfo: any) => {
+                console.log("fareDetailsList====", tripInfo);
+                return tripInfo.totalFareDetail.map((priceInfo: any) => {
+                  const fareDetails = priceInfo?.fC;
+                  console.log("fareDetails====", fareDetails);
+                  const additionalFareDetails = priceInfo?.afC?.TAF;
+
+                  if (!fareDetails || !additionalFareDetails) {
+                    console.error(
+                      "Fare details missing for this priceInfo:",
+                      priceInfo
+                    );
+                    return null;
+                  }
+
+                  const totalAmount = `₹${fareDetails.TF || 0}`;
+                  const FareDetailsList = [
+                    { title: "Base Fare", value: `₹${fareDetails.BF || 0}` },
+                    {
+                      title: "Total Amount (Fare)",
+                      value: `₹${fareDetails.TAF || 0}`,
+                    },
+                    {
+                      title: "Other Charges (OT)",
+                      value: `₹${additionalFareDetails.OT || 0}`,
+                    },
+                    {
+                      title: "Miscellaneous Charges",
+                      value: `₹${additionalFareDetails.MU || 0}`,
+                    },
+                    {
+                      title: "Yearly Charges",
+                      value: `₹${additionalFareDetails.YR || 0}`,
+                    },
+                    {
+                      title: "AGST",
+                      value: `₹${additionalFareDetails.AGST || 0}`,
+                    },
+                  ];
+                  return { list: FareDetailsList, Total: totalAmount };
+                });
+              });
+            } else if (typeof totalFareDetail === "object") {
+              const fareDetails = totalFareDetail.fC;
+              const additionalFareDetails = totalFareDetail.afC?.TAF;
+
+              if (fareDetails && additionalFareDetails) {
                 const totalAmount = `₹${fareDetails.TF || 0}`;
                 const FareDetailsList = [
                   { title: "Base Fare", value: `₹${fareDetails.BF || 0}` },
@@ -539,14 +692,27 @@ const BookingBase: React.FC = () => {
                     value: `₹${additionalFareDetails.AGST || 0}`,
                   },
                 ];
-                return { list: FareDetailsList, Total: totalAmount };
-              });
-            })
-            .filter(Boolean);
+                fareDetailsList = [
+                  { list: FareDetailsList, Total: totalAmount },
+                ];
+              } else {
+                console.error(
+                  "Fare details missing for totalFareDetail:",
+                  totalFareDetail
+                );
+              }
+            } else {
+              console.error(
+                "totalFareDetail is not an array or object:",
+                totalFareDetail
+              );
+            }
 
-          setFareDetailsList(fareDetailsList);
-        } else {
-          console.error("Invalid data structure:", data);
+            setFareDetailsList(fareDetailsList);
+            dispatch(setFareDetailsListt(fareDetailsList));
+          } else {
+            console.error("Total fare details are missing in the response.");
+          }
         }
       } else {
         console.error("API call unsuccessful:", apiResponse);
@@ -558,8 +724,6 @@ const BookingBase: React.FC = () => {
       setLoading(false);
     }
   };
-
-  console.log("flightDetails", flightDetails);
 
   // useEffect(() => {
   //   if (flightId) {
@@ -614,17 +778,18 @@ const BookingBase: React.FC = () => {
       name: "aadharNumber",
     },
   ];
-
   // Handle changes for each passenger's field
   const handleInputChange = (name: string, value: string) => {
     const [type, index, field] = name.split("-"); // Split the name into parts
-    setPassengerData((prevState) => {
-      const updatedPassengers = prevState[type].map((passenger, i) => {
-        if (i === parseInt(index)) {
-          return { ...passenger, [field]: value };
+    setPassengerData((prevState: any) => {
+      const updatedPassengers = prevState[type].map(
+        (passenger: any, i: number) => {
+          if (i === parseInt(index)) {
+            return { ...passenger, [field]: value };
+          }
+          return passenger;
         }
-        return passenger;
-      });
+      );
       return { ...prevState, [type]: updatedPassengers }; // Return updated state
     });
   };
@@ -656,12 +821,26 @@ const BookingBase: React.FC = () => {
                 // Otherwise, use Input for text fields
                 <InputGroup inside>
                   <Input
+                    type={
+                      field.placeholder?.includes("umber")
+                        ? "number"
+                        : field.placeholder?.includes("Name")
+                        ? "text"
+                        : "email"
+                    }
+                    required={
+                      field.placeholder == "Aadhar number" ? false : true
+                    }
                     placeholder={field.placeholder}
                     value={passengerData[type]?.[index]?.[field.name] || ""} // Controlled component
                     onChange={(value) => {
                       handleInputChange(
                         `${type}-${index}-${field.name}`,
-                        value
+                        field.placeholder?.includes("Mobile")
+                          ? value.toString().length <= 10
+                            ? value
+                            : value.toString().slice(0, 10)
+                          : value // Truncate if longer than 10 digits
                       ); // Call input change handler
                     }}
                   />
@@ -693,19 +872,23 @@ const BookingBase: React.FC = () => {
   const handleSubmit = (e: any) => {
     e.preventDefault();
     const allPassengerData = [
-      ...passengerData.adults.map((data) => ({ ...data, pt: "ADULT" })),
-      ...passengerData.children.map((data) => ({ ...data, pt: "CHILD" })),
-      ...passengerData.infants.map((data) => ({ ...data, pt: "INFANT" })),
+      ...passengerData.adults.map((data: any) => ({ ...data, pt: "ADULT" })),
+      ...passengerData.children.map((data: any) => ({ ...data, pt: "CHILD" })),
+      ...passengerData.infants.map((data: any) => ({ ...data, pt: "INFANT" })),
     ];
-    allPassengerData.forEach((traveller: any) => {
-      dispatch(addTravellerInfo(traveller));
-    });
+    // allPassengerData.forEach((traveller: any) => {
+    //   dispatch(addTravellerInfo(traveller));
+    // });
+    dispatch(addTravellerInfo(allPassengerData));
+
     dispatch(setGstInfo(gstData as any));
     dispatch(setContactInfo(contactDetails));
     setStep((prevStep) => Math.min(prevStep + 1, 4));
-    setShowAccordion(false);
   };
-
+  const [is_agree, setIs_agree] = useState(true);
+  const handleAgree = () => {
+    setIs_agree(!is_agree);
+  };
   return (
     <>
       <Modal open={openModal} onClose={handleCloseModal}>
@@ -795,7 +978,7 @@ const BookingBase: React.FC = () => {
                         <div>
                           {flightDetails.map((flight) => (
                             <div key={flight.id}>
-                              {flight.sI.map((segment, index) => (
+                              {flight.sI.map((segment) => (
                                 <Panel
                                   key={segment.id}
                                   bordered
@@ -1088,6 +1271,92 @@ const BookingBase: React.FC = () => {
                             </div>
                           ))}
                         </div>
+                        <TAccordion
+                          header="Traveller Details"
+                          icon={TravellerIcon}
+                          defaultExpanded={step === 0 ? true : undefined}
+                          classname={styles.bookingAccordian}
+                          render={
+                            <div>
+                              {passengers.adults > 0 &&
+                                generatePassengerFields(
+                                  "adults",
+                                  passengers.adults
+                                )}
+                              {passengers.children > 0 &&
+                                generatePassengerFields(
+                                  "children",
+                                  passengers.children
+                                )}
+                              {passengers.infants > 0 &&
+                                generatePassengerFields(
+                                  "infants",
+                                  passengers.infants
+                                )}
+                            </div>
+                          }
+                        />
+                        <br />
+                        <TAccordion
+                          header="GST Details for Business travel (Optional)"
+                          icon={GSTIcon}
+                          defaultExpanded={true} // Expand based on your logic
+                          classname={styles.bookingAccordian}
+                          render={
+                            <>
+                              <div style={rowStyle}>
+                                {GSTFields.map(
+                                  (field, idx) =>
+                                    // Only render fields that are of type 'input'
+                                    field.type === "input" && (
+                                      <div
+                                        key={idx}
+                                        style={{ marginBottom: "10px" }}
+                                      >
+                                        <label>{field.title}</label>
+
+                                        {/* RSuite Input for input type fields */}
+                                        <Input
+                                          required={
+                                            gstData?.gstin !== undefined &&
+                                            gstData?.gstin !== "" &&
+                                            gstData?.gstin !== null
+                                              ? true
+                                              : false
+                                          }
+                                          type={
+                                            field.placeholder.includes("Email")
+                                              ? "email"
+                                              : "number"
+                                          }
+                                          placeholder={field.placeholder}
+                                          value={
+                                            gstData[
+                                              field.name as keyof typeof gstData
+                                            ] || ""
+                                          } // Bind value from gstData
+                                          onChange={(value) =>
+                                            handleGstInputChange(
+                                              field.name,
+                                              field.placeholder?.includes(
+                                                "Mobile"
+                                              )
+                                                ? value.toString().length <= 10
+                                                  ? value
+                                                  : value
+                                                      .toString()
+                                                      .slice(0, 10)
+                                                : value // Truncate if longer than 10 digits
+                                            )
+                                          } // Handle change
+                                        />
+                                      </div>
+                                    )
+                                )}
+                              </div>
+                            </>
+                          }
+                        />
                         <div
                           style={{
                             display: "flex",
@@ -1106,7 +1375,8 @@ const BookingBase: React.FC = () => {
                 ) : (
                   <div
                     style={{
-                      background: "#b9d7fa",
+                      // background: "#b9d7fa",
+                      background: "#91246830",
                       padding: "20px",
                       borderRadius: "10px",
                     }}
@@ -1157,7 +1427,7 @@ const BookingBase: React.FC = () => {
                               >
                                 <>
                                   {flightDetails.map((flight) =>
-                                    flight.sI.map((segment, index) => (
+                                    flight.sI.map((segment: any) => (
                                       <div
                                         key={segment.id}
                                         style={{
@@ -1170,11 +1440,13 @@ const BookingBase: React.FC = () => {
                                         {segment.da.city} ({segment.da.code}) →{" "}
                                         {/* If there is a stopover, display the stopover information */}
                                         {segment.stops > 0 &&
-                                          segment.so.map((stop, stopIndex) => (
-                                            <span key={stopIndex}>
-                                              {stop.city} ({stop.code}) →{" "}
-                                            </span>
-                                          ))}
+                                          segment.so.map(
+                                            (stop: any, stopIndex: number) => (
+                                              <span key={stopIndex}>
+                                                {stop.city} ({stop.code}) →{" "}
+                                              </span>
+                                            )
+                                          )}
                                         {/* Display Final Destination */}
                                         {
                                           flight.sI[flight.sI.length - 1].aa
@@ -1194,7 +1466,11 @@ const BookingBase: React.FC = () => {
                             </div>
                           </div>
                         </Col>
-                        <Col xs={12} xsPush={8}>
+                        <Col
+                          xs={12}
+                          xsPush={4}
+                          style={{ marginTop: "10px", verticalAlign: "middle" }}
+                        >
                           <div>
                             <TButton
                               label={"Change Flight"}
@@ -1221,142 +1497,337 @@ const BookingBase: React.FC = () => {
                 }
               /> */}
 
-                <TAccordion
-                  header="Traveller Details"
-                  icon={TravellerIcon}
-                  defaultExpanded={step === 1 ? true : undefined}
-                  classname={styles.bookingAccordian}
-                  render={
-                    <div>
-                      {passengers.adults > 0 &&
-                        generatePassengerFields("adults", passengers.adults)}
-                      {passengers.children > 0 &&
-                        generatePassengerFields(
-                          "children",
-                          passengers.children
-                        )}
-                      {passengers.infants > 0 &&
-                        generatePassengerFields("infants", passengers.infants)}
-                    </div>
-                  }
-                />
-
-                <br />
-
-                <TAccordion
-                  header="Addons (Optional)"
-                  classname={styles.bookingAccordian}
-                  icon={AddonIcon}
-                  defaultExpanded={step === 1 ? true : undefined}
-                  render={<Addons />}
-                />
-                <TAccordion
-                  header="GST Details for Business travel (Optional)"
-                  icon={GSTIcon}
-                  defaultExpanded={true} // Expand based on your logic
-                  classname={styles.bookingAccordian}
-                  render={
-                    <>
-                      <div style={rowStyle}>
-                        {GSTFields.map(
-                          (field, idx) =>
-                            // Only render fields that are of type 'input'
-                            field.type === "input" && (
-                              <div key={idx} style={{ marginBottom: "10px" }}>
-                                <label>{field.title}</label>
-
-                                {/* RSuite Input for input type fields */}
-                                <Input
-                                  placeholder={field.placeholder}
-                                  value={
-                                    gstData[
-                                      field.name as keyof typeof gstData
-                                    ] || ""
-                                  } // Bind value from gstData
-                                  onChange={(value) =>
-                                    handleGstInputChange(field.name, value)
-                                  } // Handle change
-                                />
-                              </div>
-                            )
-                        )}
-                      </div>
-                    </>
-                  }
-                />
-                <br />
                 {step === 1 ? (
-                  <div
-                    style={{
-                      display: "flex",
-                      padding: "20px",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <TButton label={"Continue"} onClick={handleNextStep} />
-                  </div>
+                  <>
+                    {" "}
+                    <TAccordion
+                      header="Addons (Optional)"
+                      classname={styles.bookingAccordian}
+                      icon={AddonIcon}
+                      defaultExpanded={step === 1 ? true : undefined}
+                      render={<Addons />}
+                    />
+                    <br />
+                    <div
+                      style={{
+                        display: "flex",
+                        padding: "20px",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <TButton label={"Continue"} onClick={handleNextStep} />
+                    </div>
+                  </>
                 ) : (
-                  <br />
-                )}
-
-                {errorMessages !==
-                  "Seat Selection Not Applicable for this Itinerary" && (
-                  <TAccordion
-                    header="Seat Selection"
-                    classname={styles.bookingAccordian}
-                    icon={SeatBlue}
-                    defaultExpanded={step === 2 ? true : undefined}
-                    render={<FlightSeatSelection />}
-                  />
-                )}
-                {step === 2 ? (
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "center",
-                      padding: "20px",
-                    }}
-                  >
-                    <TButton label={"Continue"} onClick={handleNextStep} />
-                  </div>
-                ) : (
-                  <br />
-                )}
-                <TAccordion
-                  header="Contact Details"
-                  icon={ContectIcon}
-                  defaultExpanded={step === 3 ? true : undefined}
-                  classname={styles.bookingAccordian}
-                  render={
-                    ContectFields.length > 0 && (
-                      <div style={rowStyle}>
-                        {ContectFields.map(
-                          (field, idx) =>
-                            // Render only input fields
-                            field.type === "input" && (
-                              <div key={idx} style={{ marginBottom: "10px" }}>
-                                <label htmlFor={field.name}>
-                                  {field.title}
-                                </label>
-                                <Input
-                                  id={field.name}
-                                  placeholder={field.placeholder}
-                                  value={
-                                    contactDetails[
-                                      field.name as keyof typeof contactDetails
-                                    ] || ""
-                                  }
-                                  onChange={(value) =>
-                                    handleContactUser(field.name, value)
-                                  }
+                  <>
+                    <div
+                      style={{
+                        // background: "#b9d7fa",
+                        background: "#91246830",
+                        padding: "20px",
+                        borderRadius: "10px",
+                      }}
+                    >
+                      <Grid fluid>
+                        <Row gutter={16}>
+                          <Col xs={12}>
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "row",
+                                alignItems: "flex-start",
+                                gap: "20px",
+                              }}
+                            >
+                              <div>
+                                <img
+                                  style={{
+                                    width: "55px",
+                                    height: "100%",
+                                  }}
+                                  src={AddonIcon}
+                                  alt="AddonIcon"
                                 />
                               </div>
-                            )
-                        )}
-                      </div>
-                    )
-                  }
-                />
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: "1px",
+                                  flexDirection: "column",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    fontWeight: "700",
+                                    fontSize: "18px",
+                                    marginBottom: "5px",
+                                  }}
+                                >
+                                  Add ons
+                                </div>
+                              </div>
+                            </div>
+                          </Col>
+                        </Row>
+                      </Grid>
+                    </div>
+                    <br />
+                  </>
+                )}
+
+                {step === 3 ? (
+                  <>
+                    <TAccordion
+                      header="Seat Selection"
+                      classname={styles.bookingAccordian}
+                      icon={SeatBlue}
+                      defaultExpanded={step === 3 ? true : undefined}
+                      render={<FlightSeatSelection />}
+                    />
+                    {/* {step === 2 ? (
+                      <div
+                        style={{
+                          display: "flex",
+                          padding: "20px",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <TButton label={"Continue"} onClick={handleNextStep} />
+                      </div>) : (<br />)} */}
+                  </>
+                ) : (
+                  <>
+                    <div
+                      style={{
+                        background: "#91246830",
+                        padding: "20px",
+                        borderRadius: "10px",
+                      }}
+                    >
+                      <Grid fluid>
+                        <Row gutter={16}>
+                          <Col xs={12}>
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "row",
+                                alignItems: "flex-start",
+                                gap: "20px",
+                              }}
+                            >
+                              <div>
+                                <img
+                                  style={{
+                                    width: "55px",
+                                    height: "100%",
+                                  }}
+                                  src={SeatBlue}
+                                  alt="SeatBlue"
+                                />
+                              </div>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  flexDirection: "row",
+                                  alignItems: "flex-start",
+                                  gap: "20px",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    fontWeight: "700",
+                                    fontSize: "18px",
+                                    marginBottom: "5px",
+                                    marginTop: "20px",
+                                  }}
+                                >
+                                  Seat Selection
+                                </div>
+                              </div>
+                            </div>
+                          </Col>
+                        </Row>
+                      </Grid>
+                    </div>
+                    <br />
+                  </>
+                )}
+
+                {step === 3 ? (
+                  <TAccordion
+                    header="Contact Details"
+                    icon={ContectIcon}
+                    defaultExpanded={step === 3 ? true : undefined}
+                    classname={styles.bookingAccordian}
+                    render={
+                      ContectFields.length > 0 && (
+                        <div style={rowStyle}>
+                          {ContectFields.map(
+                            (field, idx) =>
+                              // Render only input fields
+                              field.type === "input" && (
+                                <div key={idx} style={{ marginBottom: "10px" }}>
+                                  <label htmlFor={field.name}>
+                                    {field.title}
+                                  </label>
+                                  <Input
+                                    required={true}
+                                    type={
+                                      field.placeholder.includes("Number")
+                                        ? "number"
+                                        : "email"
+                                    }
+                                    id={field.name}
+                                    placeholder={field.placeholder}
+                                    value={
+                                      contactDetails[
+                                        field.name as keyof typeof contactDetails
+                                      ] || ""
+                                    }
+                                    onChange={(value) =>
+                                      handleContactUser(
+                                        field.name,
+                                        field.placeholder?.includes("Mobile")
+                                          ? value.toString().length <= 10
+                                            ? value
+                                            : value.toString().slice(0, 10)
+                                          : value // Truncate if longer than 10 digits
+                                      )
+                                    }
+                                  />
+                                </div>
+                              )
+                          )}
+                        </div>
+                      )
+                    }
+                  />
+                ) : (
+                  <>
+                    <div
+                      style={{
+                        // background: "#b9d7fa",
+                        background: "#91246830",
+                        padding: "20px",
+                        borderRadius: "10px",
+                      }}
+                    >
+                      <Grid fluid>
+                        <Row gutter={16}>
+                          <Col xs={12}>
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "row",
+                                alignItems: "flex-start",
+                                gap: "20px",
+                              }}
+                            >
+                              <div>
+                                <img
+                                  style={{
+                                    width: "55px",
+                                    height: "100%",
+                                  }}
+                                  src={ContectIcon}
+                                  alt="SeatBlue"
+                                />
+                              </div>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  flexDirection: "row",
+                                  alignItems: "flex-start",
+                                  gap: "20px",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    fontWeight: "700",
+                                    fontSize: "18px",
+                                    marginBottom: "5px",
+                                    marginTop: "20px",
+                                  }}
+                                >
+                                  Review & Confirm
+                                </div>
+                              </div>
+                            </div>
+                          </Col>
+                          {/* <Col xs={12}>
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "row",
+                                alignItems: "flex-start",
+                                gap: "20px",
+                              }}
+                            >
+                              <div>
+                                <img
+                                  style={{
+                                    width: "55px",
+                                    height: "100%",
+                                  }}
+                                  src={ContectIcon}
+                                  alt="ContectIcon"
+                                />
+                              </div>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: "1px",
+                                  flexDirection: "column",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    fontWeight: "700",
+                                    fontSize: "18px",
+                                    marginBottom: "5px",
+                                    marginTop: "20px",
+                                  }}
+                                >
+                                  <div>
+                                    <img
+                                      style={{
+                                        width: "55px",
+                                        height: "100%",
+                                      }}
+                                      src={ContectIcon}
+                                      alt="ContectIcon"
+                                    />
+                                  </div>
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      gap: "1px",
+                                      flexDirection: "column",
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        fontWeight: "700",
+                                        fontSize: "18px",
+                                        marginBottom: "5px",
+                                        marginTop: "20px",
+                                      }}
+                                    >
+                                      Review & Confirm
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </Col> */}
+                        </Row>
+                      </Grid>
+                    </div>
+
+                    <br />
+                  </>
+                )}
+
                 {step === 3 ? (
                   <div
                     style={{
@@ -1368,6 +1839,16 @@ const BookingBase: React.FC = () => {
                     <Button
                       type="submit"
                       // onClick={handleNextStep}
+                      style={{
+                        borderRadius: "4px",
+                        padding: "10px 20px",
+                        cursor: "pointer",
+                        textDecoration: "none",
+                        width: "100px",
+                        backgroundColor: "#FA503F",
+                        border: "none",
+                        color: "#FFF",
+                      }}
                     >
                       Continue
                     </Button>
@@ -1375,6 +1856,24 @@ const BookingBase: React.FC = () => {
                 ) : (
                   <br />
                 )}
+
+                {/* <Button
+                  type="submit"
+                  // onClick={handleNextStep}
+                  style={{
+                    borderRadius:"4px",
+                    padding:"10px 20px",
+                    cursor:"pointer",
+                    textDecoration:"none",
+                    width:"100px",
+                    backgroundColor:"#FA503F",
+                    border:"none",
+                    color:"#FFF"
+                  }}
+                >
+                  Continue
+                </Button> */}
+                {/* )} */}
               </Panel>
             </form>
             {/* <button>Submit Passenger Details</button> */}
@@ -1417,7 +1916,12 @@ const BookingBase: React.FC = () => {
         >
           {/* Checkbox with Label */}
           <div style={{ display: "flex", alignItems: "center" }}>
-            <input type="checkbox" id="agree" name="agree" />
+            <input
+              type="checkbox"
+              id="agree"
+              name="agree"
+              onChange={handleAgree}
+            />
             <label htmlFor="agree" style={{ marginLeft: "10px" }}>
               By continuing to pay, I understand and agree with the {""}
               <a
@@ -1446,8 +1950,14 @@ const BookingBase: React.FC = () => {
 
           {/* Total Amount and Make Payment Button */}
           <div style={{ display: "flex", alignItems: "center" }}>
-            <span style={{ fontWeight: 700, marginRight: "20px" }}>₹9999</span>
-            <TButton label={"ConfirmPayment"} link="/payment" />
+            <span style={{ fontWeight: 700, marginRight: "20px" }}>
+              ₹{totalAmount}
+            </span>
+            <TButton
+              disabled={is_agree}
+              label={"Confirm Payment"}
+              link="/payment"
+            />
           </div>
         </div>
       ) : (

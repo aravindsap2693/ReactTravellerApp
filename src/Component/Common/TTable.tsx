@@ -56,6 +56,10 @@ const TTable: React.FC<DataTableProps> = ({ data, headers, icons }) => {
                 padding: "10px",
                 borderRadius: rowIndex === 0 ? "10px" : "0",
                 borderBottom: "none",
+                whiteSpace: 'nowrap',
+                width: '50px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
               }}
             >
               {icons && icons[header] && (

@@ -2,19 +2,24 @@ import React, { useState, useEffect } from "react";
 
 import Flightimg from "../../../assets/images/FlightImagee.svg";
 import { useSelector, useDispatch } from "react-redux";
-import { RootState } from "../../../Store/store";
 import { setErrorCode } from "../../../Store/Slice/bookingPayloadSlice";
-
+import { fetchSeatData } from "../../../Api/seat.api";
+import { toast } from "react-toastify";
+import { RootState } from "../../../Store/store";
+import {
+  setSeatTotalAmount,
+  setSsrSeatInfos,
+} from "../../../Store/Slice/seatSlice";
 interface Seat {
   seatNo: string;
-  seatPosition: {
-    row: number;
-    column: number;
-  };
   isBooked: boolean;
   amount: number;
   isLegroom?: boolean;
   isAisle?: boolean;
+  seatPosition: {
+    row: number;
+    column: number;
+  };
 }
 
 interface SeatResponse {
@@ -37,7 +42,10 @@ const FlightSeatSelection: React.FC = () => {
   const passengers = useSelector(
     (state: any) => state.flightBanner?.totalPassengers
   );
-
+  const bookingId = useSelector(
+    (state: any) => state.bookingPayload?.bookingId
+  );
+  const flightdata = useSelector((state: RootState) => state.flightList.data);
   const [seats, setSeats] = useState<Seat[]>([]);
   const [selectedSeats, setSelectedSeats] = useState<Seat[]>([]);
   const [rows, setRows] = useState<number>(0);
@@ -46,103 +54,109 @@ const FlightSeatSelection: React.FC = () => {
   const dispatch = useDispatch();
 
   // Get bookingId from Redux store
-  const bookingId = useSelector(
-    (state: RootState) => state.bookingPayload.bookingId
-  );
+
   console.log(bookingId, "bookingId");
-
   // Check if bookingId is correct before API call
-  useEffect(() => {
-    if (!bookingId) {
-      console.error("Booking ID is missing!");
-      return;
-    }
 
-    const fetchSeats = async () => {
-      try {
-        const response = await fetch(
-          "https://traveller.mroot.in/backend/api/v1/booking/seats",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              // Include any additional headers such as Authorization if needed
-              // 'Authorization': `Bearer ${yourAuthToken}`,
-            },
-            body: JSON.stringify({
-              bookingId: bookingId, // Pass bookingId from Redux
-            }),
-          }
-        );
-
-        const data = await response.json();
-
-        // Check if the response indicates seat selection is not applicable
-        if (data.status && !data.status.success) {
-          const error = data.errors[0];
-          if (error.errCode === "1056") {
-            dispatch(setErrorCode(error.message));
-            alert(error.message);
-            return;
-          }
-        }
-
-        // Check if the response is OK
-        if (!response.ok) {
-          console.error(
-            `Failed to fetch seat data. Status: ${response.status}`
-          );
-          const errorMessage = await response.text();
-          console.error("Error message:", errorMessage);
-          return;
-        }
-
-        if (data.tripSeatMap && data.tripSeatMap.tripSeat) {
-          Object.keys(data.tripSeatMap.tripSeat).forEach((tripSeatKey) => {
-            const seatData = data.tripSeatMap.tripSeat[tripSeatKey].sData;
-            const seatInfo = data.tripSeatMap.tripSeat[tripSeatKey].sInfo;
-
-            setRows(seatData.row);
-            setColumns(seatData.column);
-
-            setSeats((prevSeats) => [...prevSeats, ...seatInfo]);
-          });
-        } else {
-          console.error("Invalid seat data structure");
-        }
-      } catch (error) {
-        console.error("Error fetching seat data:", error);
-      }
-    };
-
-    fetchSeats();
-  }, [bookingId, dispatch]);
-
-  // const handleSeatClick = (seat: Seat) => {
-  //   if (seat.isBooked) return;
-
-  //   const isSelected = selectedSeats.find((s) => s.seatNo === seat.seatNo);
-  //   if (isSelected) {
-  //     setSelectedSeats(selectedSeats.filter((s) => s.seatNo !== seat.seatNo));
-  //   } else {
-  //     setSelectedSeats([...selectedSeats, seat]);
+  // const fetchSeats = async () => {
+  //   try {
+  //     const data = await fetchSeatData(bookingId);
+  //     // Check if the response indicates seat selection is not applicable
+  //     console.log("DATAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",data)
+  //     if (data.status && !data.status.success) {
+  //       const error = data.errors[0];
+  //       if (error.errCode === "1056") {
+  //         // Assuming dispatch(setErrorCode) is still being used for Redux-based error handling
+  //         dispatch(setErrorCode(error.message));
+  //         alert(error.message);
+  //         return;
+  //       }
+  //     }
+  //     // Handle successful seat data here
+  //     console.log("Seat data:", data);
+  //     if (data && data.tripSeatMap && data.tripSeatMap.tripSeat) {
+  //       Object.keys(data.tripSeatMap.tripSeat).forEach((tripSeatKey) => {
+  //         const seatData = data.tripSeatMap.tripSeat[tripSeatKey].sData;
+  //         const seatInfo = data.tripSeatMap.tripSeat[tripSeatKey].sInfo;
+  //         setRows(seatData.row);
+  //         setColumns(seatData.column);
+  //         setSeats((prevSeats) => [...prevSeats, ...seatInfo]);
+  //       });
+  //     } else {
+  //       console.error("Invalid seat data structure");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching seat data:", error);
   //   }
   // };
 
+  const fetchSeats = async () => {
+    try {
+      const data: SeatResponse = await fetchSeatData(bookingId);
+      if (data.status && !data.status.success) {
+        const error = data.errors[0];
+        if (error.errCode === "1056") {
+          dispatch(setErrorCode(error.message));
+          alert(error.message);
+          return;
+        }
+      }
+
+      if (data && data.tripSeatMap && data.tripSeatMap.tripSeat) {
+        const allSeats: Seat[] = [];
+        let totalRows = 0;
+        let totalColumns = 0;
+        Object.keys(data.tripSeatMap.tripSeat).forEach((tripSeatKey) => {
+          const seatData = data.tripSeatMap.tripSeat[tripSeatKey].sData;
+          const seatInfo = data.tripSeatMap.tripSeat[tripSeatKey].sInfo;
+          totalRows = seatData.row;
+          totalColumns = seatData.column;
+          allSeats.push(...seatInfo);
+        });
+        setRows(totalRows);
+        setColumns(totalColumns);
+        setSeats(allSeats);
+      } else {
+        console.error("Invalid seat data structure");
+      }
+    } catch (error) {
+      console.error("Error fetching seat data:", error);
+      toast.error("Failed to fetch seat data.");
+    }
+  };
+
+  useEffect(() => {
+    fetchSeats();
+  }, [bookingId, dispatch]);
+
   const handleSeatClick = (seat: Seat) => {
     if (seat.isBooked) return;
-
     const isSelected = selectedSeats.find((s) => s.seatNo === seat.seatNo);
-
     if (!isSelected && selectedSeats.length >= passengers) {
-      alert(`You can only select up to ${passengers} seats.`);
+      toast.error(`You can only select up to ${passengers} seats.`);
       return;
     }
-
     if (isSelected) {
       setSelectedSeats(selectedSeats.filter((s) => s.seatNo !== seat.seatNo));
     } else {
-      setSelectedSeats([...selectedSeats, seat]);
+      const updatedSelectedSeats = [...selectedSeats, seat];
+      console.log("updatedSelectedSeats", updatedSelectedSeats);
+      setSelectedSeats(updatedSelectedSeats);
+      const totalAmount = updatedSelectedSeats.reduce(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (total: any, s: Seat) => total + s.amount,
+        0
+      );
+      dispatch(setSeatTotalAmount(totalAmount));
+      console.log("Total amount for selected seats:", totalAmount);
+      if (updatedSelectedSeats.length > 0) {
+        const payload = updatedSelectedSeats.map((s) => ({
+          code: s.seatNo,
+          key: flightdata[0].flightid,
+        }));
+        console.log("555", payload);
+        dispatch(setSsrSeatInfos(payload));
+      }
     }
   };
 
@@ -150,7 +164,7 @@ const FlightSeatSelection: React.FC = () => {
     return seats.map((seat) => {
       const isSelected = selectedSeats.some((s) => s.seatNo === seat.seatNo);
       const seatStyle = {
-        width: "32px",
+        width: "45px",
         height: "25px",
         backgroundColor: seat.isBooked
           ? "#F44336"
@@ -163,8 +177,8 @@ const FlightSeatSelection: React.FC = () => {
         justifyContent: "center",
         cursor: seat.isBooked ? "not-allowed" : "pointer",
         margin: "2px",
-        gridRow: seat.seatPosition.row, // Use row position from seat data
-        gridColumn: seat.seatPosition.column, // Use column position from seat data
+        gridRow: seat.seatPosition.row,
+        gridColumn: seat.seatPosition.column,
         transition: "background-color 0.3s",
       };
 
@@ -173,7 +187,7 @@ const FlightSeatSelection: React.FC = () => {
           key={seat.seatNo}
           style={seatStyle}
           onClick={() => handleSeatClick(seat)}
-          title={`Seat ${seat.seatNo}, Fare: $${seat.amount}`}
+          title={`Seat ${seat.seatNo}, Fare: ${seat.amount}`}
         >
           {seat.seatNo}
         </div>
@@ -201,7 +215,7 @@ const FlightSeatSelection: React.FC = () => {
         <ul style={{ listStyle: "none", padding: "20px 0px 0px" }}>
           {selectedSeats.map((seat, index) => (
             <li key={index}>
-              {index + 1}. {seat.seatNo} - ${seat.amount}
+              {index + 1}. Seat No.{seat.seatNo} - Amount :{seat.amount}
             </li>
           ))}
         </ul>
@@ -291,7 +305,7 @@ const FlightSeatSelection: React.FC = () => {
           marginTop: "20px",
         }}
       >
-        {renderSeats()}
+        {renderSeats()} {/* Render the seats dynamically */}
       </div>
     </div>
   );

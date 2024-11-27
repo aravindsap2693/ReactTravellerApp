@@ -1,13 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Text } from "rsuite";
 import BackPack from "../../../assets/images/BackPack.svg";
-
 import PlusIcon from "@rsuite/icons/Plus";
 import MinusIcon from "@rsuite/icons/Minus";
-import { useSelector } from "react-redux";
-import { RootState } from "../../../Store/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../../../Store/store";
 import TButton from "../../../Component/Common/TButton";
+import { reviewBooking } from "../../../Api/reviewFlight.api";
+import {
+  addBaggage,
+  removeBaggage,
+  setBaggage,
+} from "../../../Store/Slice/baggageSlice";
 
 // Define a type for the baggage item
 interface BaggageItem {
@@ -18,85 +23,81 @@ interface BaggageItem {
   Image: string;
   value?: number;
 }
-const BaggageList: React.FC<{ flightId: string }> = () => {
+
+const BaggageList: React.FC = () => {
+  const dispatch = useDispatch();
   const flightId = useSelector((state: RootState) => state.booking.flightId);
-  console.log(flightId, "flightIdss");
-  const [baggageType, setBaggageType] = useState<BaggageItem[]>([]);
-  const [totalPrice, setTotalPrice] = useState<number>(0);
-  const [totalWeight, setTotalWeight] = useState<number>(0);
+  const onwardFlightId = useSelector((state: RootState) => state.booking.onwardFlightId);
+  const returnFlightId = useSelector((state: RootState) => state.booking.returnFlightId);
+  const flightType = useSelector((state: RootState) => state.flight.flightType);
+
+  // Get baggage items, totalPrice and totalWeight from the Redux store
+  const baggageType = useSelector(
+    (state: RootState) => state.baggage.baggageType
+  );
+  const totalPrice = useSelector(
+    (state: RootState) => state.baggage.totalPrice
+  );
+  const totalWeight = useSelector(
+    (state: RootState) => state.baggage.totalWeight
+  );
+
   useEffect(() => {
-    if (flightId) {
-      callBookingApi(flightId);
+    if (flightType === "One Way" ) {
+      // Call the API when the component mounts or flightId changes for One Way
+      callBookingApi(flightType, flightId, null, null, dispatch);
+    } else if (flightType === "Round Trip" ) {
+      // Call the API when the component mounts or flight IDs change for round trip
+      callBookingApi(flightType, null, onwardFlightId, returnFlightId, dispatch);
     }
-  }, [flightId]);
-  const callBookingApi = async (flightId: string) => {
-    const payload = {
-      priceIds: [flightId],
-    };
+ 
+  }, [dispatch, flightType, flightId, onwardFlightId, returnFlightId]);
+
+  const callBookingApi = async (flightType: string, flightId: string | null, onwardFlightId: string | null, returnFlightId: string | null, dispatch: AppDispatch) => {
+    const payload = flightType === "One Way" ? 
+    { priceIds: [flightId] } : 
+    { priceIds: [onwardFlightId, returnFlightId].filter(Boolean) };
+
     try {
-      const response = await fetch(
-        "https://traveller.mroot.in/backend/api/v1/booking/review",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        console.log(data, "FlightDetails");
-        // Extract baggage data from the API response
-        const baggageData: BaggageItem[] = [];
-        let initialTotalPrice = 0;
-        let initialTotalWeight = 0;
+      const data = await reviewBooking(payload)(dispatch);
+
+      const baggageData: BaggageItem[] = [];
+
+      if (data.tripInfos && data.tripInfos.length > 0) {
         data.tripInfos.forEach((tripInfo: any) => {
-          tripInfo.sI.forEach((segment: any) => {
-            segment.ssrInfo.BAGGAGE.forEach((item: any) => {
-              baggageData.push({
-                title: item.desc,
-                price: item.amount,
-                isSelected: false,
-                quantity: 0,
-                value: parseInt(item.code.replace(/\D/g, "")), // Extract numeric value from code
-                Image: BackPack,
-              });
-              initialTotalWeight += parseInt(item.code.replace(/\D/g, "")) || 0;
+          if (tripInfo.sI && tripInfo.sI.length > 0) {
+            tripInfo.sI.forEach((segment: any) => {
+              if (segment.ssrInfo && segment.ssrInfo.BAGGAGE) {
+                segment.ssrInfo.BAGGAGE.forEach((item: any) => {
+                  baggageData.push({
+                    title: item.desc,
+                    price: item.amount,
+                    isSelected: false,
+                    quantity: 0,
+                    value: parseInt(item.code.replace(/\D/g, "")),
+                    Image: BackPack,
+                  });
+                });
+              }
             });
-          });
+          }
         });
-        initialTotalPrice = data.totalPriceInfo.totalFareDetail.fC.TF;
-        setBaggageType(baggageData);
-        setTotalPrice(initialTotalPrice);
-        setTotalWeight(initialTotalWeight);
+
+        dispatch(setBaggage(baggageData));
       }
     } catch (error) {
       console.error("Error fetching booking data:", error);
     }
   };
-  const handleAddDish = (index: number) => {
-    const updatedItems = [...baggageType];
-    updatedItems[index].quantity += 1;
-    updatedItems[index].isSelected = true;
-    setTotalPrice((prevPrice) => prevPrice + updatedItems[index].price);
-    setTotalWeight(
-      (prevWeight) => prevWeight + (updatedItems[index].value || 0)
-    );
-    setBaggageType(updatedItems);
+
+  const handleAddBaggage = (index: number) => {
+    dispatch(addBaggage(index));
   };
-  const handleRemoveDish = (index: number) => {
-    const updatedItems = [...baggageType];
-    if (updatedItems[index].quantity > 0) {
-      updatedItems[index].quantity -= 1;
-      updatedItems[index].isSelected = updatedItems[index].quantity > 0;
-      setTotalPrice((prevPrice) => prevPrice - updatedItems[index].price);
-      setTotalWeight(
-        (prevWeight) => prevWeight - (updatedItems[index].value || 0)
-      );
-      setBaggageType(updatedItems);
-    }
+
+  const handleRemoveBaggage = (index: number) => {
+    dispatch(removeBaggage(index));
   };
+
   return (
     <>
       <div
@@ -178,14 +179,14 @@ const BaggageList: React.FC<{ flightId: string }> = () => {
                 type="ghost"
                 padding="5px 10px"
                 icon={<MinusIcon />}
-                onClick={() => handleRemoveDish(i)}
+                onClick={() => handleRemoveBaggage(i)}
               />
               {item.quantity}
               <TButton
                 type="ghost"
                 padding="5px 10px"
                 icon={<PlusIcon />}
-                onClick={() => handleAddDish(i)}
+                onClick={() => handleAddBaggage(i)}
               />
             </>
           </div>
@@ -194,4 +195,5 @@ const BaggageList: React.FC<{ flightId: string }> = () => {
     </>
   );
 };
+
 export default BaggageList;

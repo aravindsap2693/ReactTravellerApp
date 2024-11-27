@@ -1,11 +1,12 @@
+//base URL
+export const APIURL = "https://traveller.mroot.in/backend/api/v1/wallet/balance";
 
-
-
+//route path
 export const LOGIN = "/login";
 export const REGISTER = "/register";
 export const HOME = "/home";
 export const BOOKING = "/booking";
-
+export const REDIRECTLOGIN = "/";
 
 export const TravelAgentList = [
   {
@@ -150,10 +151,9 @@ export const planDetails = [
   },
 ];
 
-export const wayList = ["One-way", "Two-way", "Multi-City"];
+export const wayList = ["One Way", "Round Trip", "Multi City"];
 
 export const airPortList = [
-  
   {
     id: 245,
     code: "WSY",
@@ -261,5 +261,5 @@ export const airPortList = [
     city: "Delhi",
     countryCode: "IN",
     country: "India",
-  }
+  },
 ];

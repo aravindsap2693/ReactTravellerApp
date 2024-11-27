@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface LoginModalProps {
   open: boolean;
   onClose: () => void;
 }
 
 export interface AuthState {
+  isLogedin: any;
   loading: boolean;
   isAuthenticated: boolean;
   token: string | null;

@@ -56,3 +56,5 @@ const baggageSlice = createSlice({
 
 export const { setBaggage, addBaggage, removeBaggage, resetBaggage } = baggageSlice.actions;
 export default baggageSlice.reducer;
+
+export const baggageReducer = baggageSlice.reducer

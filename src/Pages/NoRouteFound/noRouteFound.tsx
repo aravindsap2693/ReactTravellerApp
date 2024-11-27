@@ -11,7 +11,7 @@ const NoRouteFound = () => {
                 flexDirection: "column",
                 justifyContent: "center",
                 alignItems: "center",
-                height: "80vh", // Adjust container height to fill the viewport
+                height: "50vh", // Adjust container height to fill the viewport
                 textAlign: "center",
             }}
         >
@@ -31,7 +31,7 @@ const NoRouteFound = () => {
                     marginTop: "20px"
                 }}
             >
-                <TButton label="Search again" type="primary" />
+                <TButton label="Search again" type="primary" link='/home' />
             </Nav>
         </div>
 

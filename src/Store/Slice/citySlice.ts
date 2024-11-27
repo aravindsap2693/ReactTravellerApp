@@ -1,9 +1,11 @@
 // slices/citySlice.ts
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { cityItemProps, cityListProps } from "../../Interfaces/models/city.model";
+import {
+  cityItemProps,
+  CityListProps,
+} from "../../Interfaces/models/city.model";
 
-
-const initialState: cityListProps = {
+const initialState: CityListProps = {
   data: [],
   error: null,
 };

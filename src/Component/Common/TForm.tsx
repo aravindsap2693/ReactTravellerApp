@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from "react";
 import {
   Input,
@@ -8,9 +9,10 @@ import {
   Radio,
 } from "rsuite";
 import TButton from "./TButton";
-import { FieldOptionProps, FieldProps } from "@/src/models/common.model";
+
 import EyeIcon from "@rsuite/icons/legacy/Eye";
 import EyeSlashIcon from "@rsuite/icons/legacy/EyeSlash";
+import { FieldOptionProps, FieldProps } from "../../Interfaces/models/common.model";
 
 const TForm: React.FC<FieldProps> = ({
   title,
@@ -37,7 +39,7 @@ const TForm: React.FC<FieldProps> = ({
           <Input
             placeholder={placeholder}
             value={value as string}
-            onChange={(e) => handleChange(e.target.value)}
+            onChange={(e) => handleChange(e)}
           />
           <TButton label="Apply" />
         </InputGroup>
