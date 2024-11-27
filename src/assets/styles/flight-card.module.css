@@ -1,0 +1,30 @@
+/* DatePickerWithIcon.module.css */
+.datePickerWrapper {
+  position: relative;
+}
+
+.datePicker {
+  padding-left: 40px; /* Adjust based on the size of your custom icon */
+}
+
+.rs-picker-toggle {
+  display: none; /* Hide the default caret */
+}
+
+.rs-input-group-addon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.accordion .rs-panel-btn{
+  padding: 0px !important;
+}
+
+.dropdown{
+  background-color: #fff !important;
+  justify-content: space-between;
+  width: 100%;
+}
+
+

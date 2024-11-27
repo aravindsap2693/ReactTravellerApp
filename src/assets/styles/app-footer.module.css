@@ -1,0 +1,44 @@
+@import url("https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&family=Nunito:ital,wght@1,600&display=swap");
+
+.footer {
+  padding: 20px 0;
+  /* display: flex;
+  justify-content: center; */
+  margin: auto;
+  width: 67%;
+  
+}
+
+.panel {
+  padding: 20px;
+  margin-bottom: 20px;
+  font-family: "Nunito Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+}
+
+.newsletterSubscription {
+  display: flex;
+  align-items: center;
+}
+
+.newsletterSubscription input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+
+.appFooter {
+  display: flex;
+  justify-content: center;
+  background-color: #f5f6fb;
+}
+
+
+.socialMedia {
+  display: flex;
+  gap: 0px;
+  padding:"5px"
+}

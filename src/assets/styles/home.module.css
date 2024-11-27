@@ -1,0 +1,33 @@
+/* .navbar_container {
+  display: flex;
+  align-items: center;
+  margin: auto 10px;
+} */
+
+/* Add this to your home.module.css file */
+
+/* Add this to your home.module.css file */
+
+.navbar_container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0 20px;
+}
+
+.user_section {
+  display: flex;
+  align-items: center;
+}
+.main {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  min-height: 10vh;
+}
+
+
+

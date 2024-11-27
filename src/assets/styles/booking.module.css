@@ -1,0 +1,52 @@
+/* .bookingPanel {
+  margin-bottom: 20px;
+  text-wrap: wrap;
+  border: 1px solid lightgrey;
+  line-height: 2;
+} */
+
+.bookingAccordian {
+  border-radius: 15px;
+  background-color: #fff;
+  box-shadow: "0 3px 10px rgb(0 0 0 / 0.2)";
+}
+
+.bookingAccordian h2 {
+  padding: 10px !important;
+  border-bottom: 1px solid lightgrey;
+  /* background-color: #b9d7fa; */
+  background-color: #FFF;
+}
+
+.bookingAccordian button {
+  /* background-color: #b9d7fa ; */
+  border-radius: 5px !important;
+  padding: 8px !important ;
+}
+
+/* .bookingAccordian button:hover {
+  background-color: #b9d7fa !important;
+} */
+
+.FareList {
+  padding: 20px 0px 12px;
+}
+
+.tabNav .rs-nav-subtle.rs-nav-horizontal .rs-nav-bar {
+  border-top: none; /* Remove default border */
+  background-image: linear-gradient(to right, #0087e1 0%, #174495 100%);
+  height: 2px; /* Adjust height if necessary */
+  margin-top: -2px; /* Adjust position to align with the original border */
+}
+
+.tabNav .rs-nav-bar {
+  border-top: 2px solid #f7f7fa !important;
+}
+.tabNav {
+  gap: 0px !important;
+}
+.tabNav button:before {
+  height: 3.5px !important;
+  border-radius: 20px;
+  background: linear-gradient(to right, #0087e1 0%, #174495 100%);
+}
